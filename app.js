@@ -88,7 +88,6 @@ document.addEventListener('DOMContentLoaded', async () => {
         const tbody = document.getElementById('table-body');
         const tr = document.createElement('tr');
         tr.className = 'match-row';
-        // デザイン統一：各セルを平行四辺形に（transformはCSSで制御）
         tr.innerHTML = `
             <td class="text-center font-bold bg-gray-200" style="color:black;">
                 <span>${rowCount}</span>
@@ -105,7 +104,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             input.addEventListener('input', updateTotals);
             input.addEventListener('focus', function() { this.select(); });
             
-            // ★ ダブルタップ反転機能を復活
+            // ダブルタップ反転機能
             input.addEventListener('dblclick', function() {
                 const val = parseFloat(this.value) || 0;
                 if(val !== 0) {
@@ -116,13 +115,12 @@ document.addEventListener('DOMContentLoaded', async () => {
         });
     };
 
-    // ★ 自動計算（歪み直し）ロジックを復活
+    // 自動計算（歪み直し）ロジック
     window.runCalc = (btn) => {
         const row = btn.closest('tr');
         const inputs = Array.from(row.querySelectorAll('.score-input'));
         const emptyInputs = inputs.filter(i => i.value === "");
         
-        // 未入力があればそこを、なければ最後のDを調整
         const target = emptyInputs.length > 0 ? emptyInputs[0] : inputs[3];
         
         let otherSum = 0;
@@ -142,16 +140,25 @@ document.addEventListener('DOMContentLoaded', async () => {
 
         document.querySelectorAll('.match-row').forEach(row => {
             const inputs = row.querySelectorAll('.score-input');
+            
+            // ★ 個別入力欄の色分け
+            inputs.forEach(input => {
+                const val = parseFloat(input.value) || 0;
+                input.classList.remove('score-pos', 'score-neg', 'score-zero');
+                if (val > 0) input.classList.add('score-pos');
+                else if (val < 0) input.classList.add('score-neg');
+                else if (input.value !== "") input.classList.add('score-zero');
+            });
+
             const vals = Array.from(inputs).map(i => parseFloat(i.value) || 0);
             const hasInput = Array.from(inputs).some(i => i.value !== "");
             
             const rowSum = vals.reduce((a,b) => a+b, 0);
             const balCell = row.querySelector('.bal-cell');
             
-            // ★ バランスチェック & CALCボタンの表示
             if (!hasInput) {
                 balCell.innerHTML = "";
-            } else if (rowSum === 0) {
+            } else if (Math.abs(rowSum) < 0.01) { // 浮動小数点誤差考慮
                 balCell.innerHTML = `<span class="text-gray-400 font-black italic text-[10px]" style="transform:skewX(10deg); display:block;">OK</span>`;
             } else {
                 balCell.innerHTML = `<button class="btn-calc" onclick="runCalc(this)">CALC</button>`;
@@ -184,20 +191,29 @@ document.addEventListener('DOMContentLoaded', async () => {
         tipInputs.forEach(input => {
             const col = input.dataset.col;
             const val = parseFloat(input.value) || 0;
+            
+            // ★ TIP入力欄の色分け
+            input.classList.remove('score-pos', 'score-neg', 'score-zero');
+            if (val > 0) input.classList.add('score-pos');
+            else if (val < 0) input.classList.add('score-neg');
+
             grandTotals[col] += val;
             tipSum += val;
         });
 
         const tipBalCell = document.getElementById('tip-bal-cell');
         tipBalCell.innerText = tipSum;
-        if(tipSum !== 0) tipBalCell.classList.add('bal-ng');
-        else tipBalCell.classList.remove('bal-ng');
+        if(Math.abs(tipSum) > 0.01) tipBalCell.style.color = 'var(--p5-red)';
+        else tipBalCell.style.color = 'var(--p5-black)';
 
         ['a','b','c','d'].forEach(id => {
             const tEl = document.getElementById(`tot-${id}`);
-            tEl.innerText = grandTotals[id].toFixed(1).replace(/\.0$/, '');
-            if(grandTotals[id] > 0) tEl.style.color = '#3b82f6';
-            else if(grandTotals[id] < 0) tEl.style.color = '#ef4444';
+            const total = grandTotals[id];
+            tEl.innerText = total.toFixed(1).replace(/\.0$/, '');
+            
+            // 合計欄の色分け（既存の色指定をP5カラーに）
+            if(total > 0) tEl.style.color = 'var(--p5-blue)';
+            else if(total < 0) tEl.style.color = 'var(--p5-red)';
             else tEl.style.color = 'var(--p5-yellow)';
 
             const cEl = document.getElementById(`coin-${id}`);
@@ -220,7 +236,6 @@ document.addEventListener('DOMContentLoaded', async () => {
             return;
         }
 
-        // CALCボタン（btn-calc）が存在＝未精算の行がある
         if(document.querySelectorAll('.btn-calc').length > 0) {
             if(!confirm("⚠️ CAUTION: Score not balanced. Force submit?")) return;
         }
