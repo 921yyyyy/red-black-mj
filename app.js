@@ -43,7 +43,6 @@ document.addEventListener('DOMContentLoaded', async () => {
         const listEl = document.getElementById('modal-player-list');
         listEl.innerHTML = ''; 
 
-        // 既存プレイヤーをボタンとして生成
         allPlayers.forEach(name => {
             const btn = document.createElement('button');
             btn.className = "w-full py-4 px-6 text-left text-xl font-bold bg-white text-black transform -skew-x-12 hover:bg-red-600 hover:text-white transition-all border-l-8 border-transparent hover:border-black mb-1";
@@ -52,7 +51,6 @@ document.addEventListener('DOMContentLoaded', async () => {
             listEl.appendChild(btn);
         });
 
-        // 新規追加ボタン
         const addBtn = document.createElement('button');
         addBtn.className = "w-full py-3 px-6 text-left text-sm font-bold bg-gray-800 text-gray-400 transform -skew-x-12 mt-4";
         addBtn.innerHTML = `<span class="block transform skew-x-12">+ NEW RECRUIT</span>`;
@@ -90,22 +88,52 @@ document.addEventListener('DOMContentLoaded', async () => {
         const tbody = document.getElementById('table-body');
         const tr = document.createElement('tr');
         tr.className = 'match-row';
+        // デザイン統一：各セルを平行四辺形に（transformはCSSで制御）
         tr.innerHTML = `
-            <td class="text-center font-bold bg-gray-200" style="transform:skewX(-10deg); color:black;">
-                <span style="display:block; transform:skewX(10deg);">${rowCount}</span>
+            <td class="text-center font-bold bg-gray-200" style="color:black;">
+                <span>${rowCount}</span>
             </td>
             <td><input type="number" inputmode="decimal" class="score-input" data-col="a"></td>
             <td><input type="number" inputmode="decimal" class="score-input" data-col="b"></td>
             <td><input type="number" inputmode="decimal" class="score-input" data-col="c"></td>
             <td><input type="number" inputmode="decimal" class="score-input" data-col="d"></td>
-            <td class="bal-cell text-center font-mono text-xs font-bold pt-3">0</td>
+            <td class="bal-cell text-center flex items-center justify-center"></td>
         `;
         tbody.appendChild(tr);
 
         tr.querySelectorAll('input').forEach(input => {
             input.addEventListener('input', updateTotals);
             input.addEventListener('focus', function() { this.select(); });
+            
+            // ★ ダブルタップ反転機能を復活
+            input.addEventListener('dblclick', function() {
+                const val = parseFloat(this.value) || 0;
+                if(val !== 0) {
+                    this.value = val * -1;
+                    updateTotals();
+                }
+            });
         });
+    };
+
+    // ★ 自動計算（歪み直し）ロジックを復活
+    window.runCalc = (btn) => {
+        const row = btn.closest('tr');
+        const inputs = Array.from(row.querySelectorAll('.score-input'));
+        const emptyInputs = inputs.filter(i => i.value === "");
+        
+        // 未入力があればそこを、なければ最後のDを調整
+        const target = emptyInputs.length > 0 ? emptyInputs[0] : inputs[3];
+        
+        let otherSum = 0;
+        inputs.forEach(i => {
+            if (i !== target) {
+                otherSum += parseFloat(i.value) || 0;
+            }
+        });
+
+        target.value = -otherSum;
+        updateTotals();
     };
 
     function updateTotals() {
@@ -115,17 +143,18 @@ document.addEventListener('DOMContentLoaded', async () => {
         document.querySelectorAll('.match-row').forEach(row => {
             const inputs = row.querySelectorAll('.score-input');
             const vals = Array.from(inputs).map(i => parseFloat(i.value) || 0);
+            const hasInput = Array.from(inputs).some(i => i.value !== "");
             
             const rowSum = vals.reduce((a,b) => a+b, 0);
             const balCell = row.querySelector('.bal-cell');
-            balCell.textContent = rowSum;
             
-            if(rowSum !== 0) {
-                balCell.classList.add('bal-ng');
-                balCell.classList.remove('bal-ok');
+            // ★ バランスチェック & CALCボタンの表示
+            if (!hasInput) {
+                balCell.innerHTML = "";
+            } else if (rowSum === 0) {
+                balCell.innerHTML = `<span class="text-gray-400 font-black italic text-[10px]" style="transform:skewX(10deg); display:block;">OK</span>`;
             } else {
-                balCell.classList.remove('bal-ng');
-                balCell.classList.add('bal-ok');
+                balCell.innerHTML = `<button class="btn-calc" onclick="runCalc(this)">CALC</button>`;
             }
 
             grandTotals.a += vals[0];
@@ -183,7 +212,6 @@ document.addEventListener('DOMContentLoaded', async () => {
         const btn = document.getElementById('submit-btn');
         const badge = document.getElementById('status-badge');
         
-        // バリデーション：selectedPlayerValuesを確認
         const pIds = ['pA', 'pB', 'pC', 'pD'];
         const names = pIds.map(id => selectedPlayerValues[id]);
         
@@ -192,7 +220,8 @@ document.addEventListener('DOMContentLoaded', async () => {
             return;
         }
 
-        if(document.querySelectorAll('.bal-ng').length > 0) {
+        // CALCボタン（btn-calc）が存在＝未精算の行がある
+        if(document.querySelectorAll('.btn-calc').length > 0) {
             if(!confirm("⚠️ CAUTION: Score not balanced. Force submit?")) return;
         }
 
@@ -285,6 +314,13 @@ document.addEventListener('DOMContentLoaded', async () => {
     document.querySelectorAll('.tip-in').forEach(input => {
         input.addEventListener('input', updateTotals);
         input.addEventListener('focus', function() { this.select(); });
+        input.addEventListener('dblclick', function() {
+            const val = parseFloat(this.value) || 0;
+            if(val !== 0) {
+                this.value = val * -1;
+                updateTotals();
+            }
+        });
     });
 
     await initRoster();
