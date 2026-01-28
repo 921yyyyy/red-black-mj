@@ -18,6 +18,7 @@
             --p5-grey: #222;
             --p5-white: #f5f5f5;
             --p5-yellow: #fee600;
+            --p5-blue: #0099ff; /* P5風の鮮やかな青を追加 */
         }
         
         body {
@@ -65,7 +66,7 @@
         .p5-table {
             width: 100%;
             border-collapse: separate; 
-            border-spacing: 4px 8px; /* 斜めが被らないよう左右の間隔も少し追加 */
+            border-spacing: 1px 8px; /* ★セルの左右間隔をさらに詰め、横に大きく */
         }
         
         .p5-table th {
@@ -83,16 +84,16 @@
             transform: skewX(10deg);
         }
 
-        /* ★行とセルの斜めデザイン統一 */
+        /* 行とセルの斜めデザイン統一 */
         .match-row td, .row-spec td, .row-total td {
             background: var(--p5-white);
             border: 2px solid var(--p5-black);
             padding: 0;
             position: relative;
-            transform: skewX(-10deg); /* セル自体を傾ける */
+            transform: skewX(-10deg);
         }
 
-        /* ★入力欄の中身を逆方向に傾けて垂直に戻す */
+        /* 入力欄の中身 */
         input.score-input, input.tip-in {
             width: 100%;
             height: 45px;
@@ -103,19 +104,42 @@
             font-size: 20px;
             color: var(--p5-black);
             outline: none;
-            transform: skewX(10deg); /* 中身を戻す */
+            transform: skewX(10deg);
+            transition: all 0.2s;
         }
 
-        /* 項番とBALの中身も垂直に戻す */
-        .match-row td span, .bal-cell span, .row-total td, .row-spec td {
-            /* row-totalなどはtd自体が傾いているので、中のテキストを戻す必要がある場合はここ */
+        /* ★数値の色分け */
+        .score-pos { color: var(--p5-blue) !important; text-shadow: 0 0 5px rgba(0, 153, 255, 0.4); }
+        .score-neg { color: var(--p5-red) !important; text-shadow: 0 0 5px rgba(230, 0, 18, 0.4); }
+        .score-zero { color: var(--p5-black) !important; }
+
+        /* ★フォーカス時の派手なグリッチモーション */
+        input.score-input:focus, input.tip-in:focus {
+            background: var(--p5-black);
+            animation: p5-focus-glitch 0.4s infinite alternate;
+            z-index: 10;
         }
+
+        @keyframes p5-focus-glitch {
+            0% {
+                box-shadow: 0 0 5px var(--p5-red), inset 0 0 10px var(--p5-red);
+                filter: brightness(1.1);
+                transform: skewX(10deg) scale(1.02);
+            }
+            100% {
+                box-shadow: -4px 0 15px var(--p5-red), 4px 0 15px var(--p5-white), inset 0 0 20px var(--p5-red);
+                filter: brightness(1.4);
+                transform: skewX(10deg) scale(1.05);
+            }
+        }
+
+        /* 項番とBALの中身 */
         .match-row td:first-child span {
             display: block;
             transform: skewX(10deg);
         }
 
-        /* ★CALCボタンのデザイン */
+        /* CALCボタンのデザイン */
         .btn-calc {
             background: var(--p5-red);
             color: white;
@@ -128,16 +152,6 @@
         }
         .btn-calc:active {
             transform: skewX(10deg) scale(0.9);
-        }
-
-        input.score-input:focus, input.tip-in:focus {
-            background: var(--p5-black);
-            color: var(--p5-red);
-            animation: pulse-focus 0.5s infinite alternate;
-        }
-        @keyframes pulse-focus {
-            from { box-shadow: inset 0 0 5px var(--p5-red); }
-            to { box-shadow: inset 0 0 15px var(--p5-red); }
         }
 
         #tip-bal-cell {
