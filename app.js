@@ -128,23 +128,19 @@ document.addEventListener('DOMContentLoaded', async () => {
     };
 
     function updateTotals() {
-        let grandTotals = { a:0, b:0, c:0, d:0 };
-        let coinTotals = { a:0, b:0, c:0, d:0 };
+        let baseTotals = { a:0, b:0, c:0, d:0 };
+        let chipValues = { a:0, b:0, c:0, d:0 };
 
+        // 各マッチの行を集計
         document.querySelectorAll('.match-row').forEach(row => {
             const inputs = row.querySelectorAll('.score-input');
             
             inputs.forEach(input => {
                 const val = parseFloat(input.value) || 0;
-                // スラッシュ背景適用のためのクラス付け替え
                 input.classList.remove('score-pos', 'score-neg', 'score-zero');
-                if (val > 0) {
-                    input.classList.add('score-pos');
-                } else if (val < 0) {
-                    input.classList.add('score-neg');
-                } else if (input.value !== "") {
-                    input.classList.add('score-zero');
-                }
+                if (val > 0) input.classList.add('score-pos');
+                else if (val < 0) input.classList.add('score-neg');
+                else if (input.value !== "") input.classList.add('score-zero');
             });
 
             const vals = Array.from(inputs).map(i => parseFloat(i.value) || 0);
@@ -160,60 +156,55 @@ document.addEventListener('DOMContentLoaded', async () => {
                 balCell.innerHTML = `<button class="btn-calc" onclick="runCalc(this)">CALC</button>`;
             }
 
-            grandTotals.a += vals[0];
-            grandTotals.b += vals[1];
-            grandTotals.c += vals[2];
-            grandTotals.d += vals[3];
-
-            const scores = [
-                { id:'a', val: vals[0] },
-                { id:'b', val: vals[1] },
-                { id:'c', val: vals[2] },
-                { id:'d', val: vals[3] }
-            ];
-            scores.sort((x,y) => y.val - x.val);
-            
-            const isAllZero = vals.every(v => v === 0);
-            if (!isAllZero) {
-                const coinMap = [3, 1, -1, -3];
-                scores.forEach((p, idx) => {
-                    coinTotals[p.id] += coinMap[idx];
-                });
-            }
+            baseTotals.a += vals[0];
+            baseTotals.b += vals[1];
+            baseTotals.c += vals[2];
+            baseTotals.d += vals[3];
         });
 
-        const tipInputs = document.querySelectorAll('.tip-in');
-        let tipSum = 0;
-        tipInputs.forEach(input => {
+        // CHIP欄の集計
+        const chipInputs = document.querySelectorAll('.chip-in');
+        let chipSum = 0;
+        chipInputs.forEach(input => {
             const col = input.dataset.col;
             const val = parseFloat(input.value) || 0;
+            chipValues[col] = val;
             
             input.classList.remove('score-pos', 'score-neg', 'score-zero');
             if (val > 0) input.classList.add('score-pos');
             else if (val < 0) input.classList.add('score-neg');
 
-            grandTotals[col] += val;
-            tipSum += val;
+            chipSum += val;
         });
 
-        const tipBalCell = document.getElementById('tip-bal-cell');
-        if (tipBalCell) {
-            tipBalCell.innerText = tipSum;
-            tipBalCell.style.color = Math.abs(tipSum) > 0.01 ? 'var(--p5-red)' : 'var(--p5-black)';
+        const chipBalCell = document.getElementById('chip-bal-cell');
+        if (chipBalCell) {
+            chipBalCell.innerText = chipSum;
+            chipBalCell.style.color = Math.abs(chipSum) > 0.01 ? 'var(--p5-red)' : 'var(--p5-black)';
         }
 
+        // TOTと新ロジックCOINの反映
         ['a','b','c','d'].forEach(id => {
+            const total = baseTotals[id] + chipValues[id];
             const tEl = document.getElementById(`tot-${id}`);
-            const total = grandTotals[id];
             if (tEl) {
                 tEl.innerText = total.toFixed(1).replace(/\.0$/, '');
-                if(total > 0) tEl.style.color = 'var(--p5-sp-pink)';
-                else if(total < 0) tEl.style.color = 'var(--p5-hp-cyan)';
-                else tEl.style.color = 'var(--p5-yellow)';
+                // 視認性向上のため、TOTの文字色は白固定（デザイン方針通り）
+                tEl.style.color = 'var(--p5-white)';
             }
 
+            // 新COIN計算: (TOT * 20) + (CHIP * 50)
             const cEl = document.getElementById(`coin-${id}`);
-            if (cEl) cEl.innerText = coinTotals[id];
+            if (cEl) {
+                const chip = chipValues[id];
+                const coinResult = Math.floor((total * 20) + (chip * 50));
+                cEl.innerText = coinResult;
+                
+                // コインの色付け（プラスは黄色、マイナスはシアン）
+                if (coinResult > 0) cEl.style.color = 'var(--p5-yellow)';
+                else if (coinResult < 0) cEl.style.color = 'var(--p5-cyan)';
+                else cEl.style.color = 'var(--p5-white)';
+            }
         });
     }
 
@@ -270,9 +261,10 @@ document.addEventListener('DOMContentLoaded', async () => {
                 });
             });
 
+            // 集計データの作成
             const grandTotals = ['a','b','c','d'].map(id => parseFloat(document.getElementById(`tot-${id}`).innerText));
             const coinTotals = ['a','b','c','d'].map(id => parseFloat(document.getElementById(`coin-${id}`).innerText));
-            const tips = ['a','b','c','d'].map(id => parseFloat(document.querySelector(`.tip-in[data-col="${id}"]`).value) || 0);
+            const chips = ['a','b','c','d'].map(id => parseFloat(document.querySelector(`.chip-in[data-col="${id}"]`).value) || 0);
 
             const summaryData = names.map((name, i) => ({ name, score: grandTotals[i] }));
             const sorted = [...summaryData].sort((a,b) => b.score - a.score);
@@ -285,7 +277,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                     player_name: name,
                     total_score: grandTotals[i],
                     coins: coinTotals[i],
-                    tips: tips[i],
+                    tips: chips[i], // カラム名はスキーマ維持のためtips
                     final_rank: rank,
                     created_at: finalTimestamp,
                     game_date: gameDate
@@ -311,7 +303,8 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     document.getElementById('add-row').onclick = window.addMatchRow;
     
-    document.querySelectorAll('.tip-in').forEach(input => {
+    // CHIP入力へのリスナー設定（クラス名は chip-in に更新済み）
+    document.querySelectorAll('.chip-in').forEach(input => {
         input.addEventListener('input', updateTotals);
         input.addEventListener('focus', function() { this.select(); });
     });
