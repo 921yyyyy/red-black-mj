@@ -1,6 +1,6 @@
 document.addEventListener('DOMContentLoaded', async () => {
     // --------------------------------------------------------
-    // Supabase Configuration (維持)
+    // Supabase Configuration
     // --------------------------------------------------------
     const SUPABASE_URL = 'https://zekfibkimvsfbnctwzti.supabase.co';
     const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inpla2ZpYmtpbXZzZmJuY3R3enRpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njg1ODU5NjYsImV4cCI6MjA4NDE2MTk2Nn0.AjW_4HvApe80USaHTAO_P7WeWaQvPo3xi3cpHm4hrFs';
@@ -8,9 +8,8 @@ document.addEventListener('DOMContentLoaded', async () => {
     window.sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
     // --------------------------------------------------------
-    // UI Initialization (Calendar & Players) (維持)
+    // UI Initialization (Calendar & Players)
     // --------------------------------------------------------
-    
     flatpickr("#game-date", {
         dateFormat: "Y-m-d",
         defaultDate: "today",
@@ -99,7 +98,6 @@ document.addEventListener('DOMContentLoaded', async () => {
         tr.querySelectorAll('input').forEach(input => {
             input.addEventListener('input', updateTotals);
             input.addEventListener('focus', function() { this.select(); });
-            
             input.addEventListener('dblclick', function() {
                 const val = parseFloat(this.value) || 0;
                 if(val !== 0) {
@@ -112,7 +110,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     window.runCalc = (btn) => {
         const row = btn.closest('tr');
-        const inputs = Array.from(row.querySelectorAll('.score-input'));
+        const inputs = Array.from(row.querySelectorAll('input'));
         const emptyInputs = inputs.filter(i => i.value === "");
         const target = emptyInputs.length > 0 ? emptyInputs[0] : inputs[3];
         
@@ -131,9 +129,10 @@ document.addEventListener('DOMContentLoaded', async () => {
         let baseTotals = { a:0, b:0, c:0, d:0 };
         let chipValues = { a:0, b:0, c:0, d:0 };
 
-        // 各マッチの行を集計
+        // 各マッチの行を集計 (TOTにはスコアのみ含める)
         document.querySelectorAll('.match-row').forEach(row => {
             const inputs = row.querySelectorAll('.score-input');
+            const vals = Array.from(inputs).map(i => parseFloat(i.value) || 0);
             
             inputs.forEach(input => {
                 const val = parseFloat(input.value) || 0;
@@ -143,7 +142,6 @@ document.addEventListener('DOMContentLoaded', async () => {
                 else if (input.value !== "") input.classList.add('score-zero');
             });
 
-            const vals = Array.from(inputs).map(i => parseFloat(i.value) || 0);
             const hasInput = Array.from(inputs).some(i => i.value !== "");
             const rowSum = vals.reduce((a,b) => a+b, 0);
             const balCell = row.querySelector('.bal-cell');
@@ -162,45 +160,49 @@ document.addEventListener('DOMContentLoaded', async () => {
             baseTotals.d += vals[3];
         });
 
-        // CHIP欄の集計
-        const chipInputs = document.querySelectorAll('.chip-in');
-        let chipSum = 0;
-        chipInputs.forEach(input => {
-            const col = input.dataset.col;
-            const val = parseFloat(input.value) || 0;
-            chipValues[col] = val;
-            
-            input.classList.remove('score-pos', 'score-neg', 'score-zero');
-            if (val > 0) input.classList.add('score-pos');
-            else if (val < 0) input.classList.add('score-neg');
+        // CHIP欄の集計 (文字色は常に白、TOTとは分離)
+        const chipRow = document.querySelector('.chip-row');
+        if (chipRow) {
+            const chipInputs = chipRow.querySelectorAll('.chip-in');
+            const chipVals = Array.from(chipInputs).map(i => parseFloat(i.value) || 0);
+            const hasChipInput = Array.from(chipInputs).some(i => i.value !== "");
+            const chipSum = chipVals.reduce((a,b) => a+b, 0);
+            const chipBalCell = document.getElementById('chip-bal-cell');
 
-            chipSum += val;
-        });
+            chipInputs.forEach((input, idx) => {
+                const val = chipVals[idx];
+                const col = input.dataset.col;
+                chipValues[col] = val;
+                input.style.color = 'var(--p5-white)';
+            });
 
-        const chipBalCell = document.getElementById('chip-bal-cell');
-        if (chipBalCell) {
-            chipBalCell.innerText = chipSum;
-            chipBalCell.style.color = Math.abs(chipSum) > 0.01 ? 'var(--p5-red)' : 'var(--p5-black)';
+            if (chipBalCell) {
+                if (!hasChipInput) {
+                    chipBalCell.innerHTML = "";
+                } else if (Math.abs(chipSum) < 0.01) {
+                    chipBalCell.innerHTML = `<span class="text-white font-black italic text-[10px]" style="transform:skewX(10deg); display:block;">OK</span>`;
+                } else {
+                    chipBalCell.innerHTML = `<button class="btn-calc" onclick="runCalc(this)">CALC</button>`;
+                }
+            }
         }
 
-        // TOTと新ロジックCOINの反映
+        // TOTとCOINの反映
         ['a','b','c','d'].forEach(id => {
-            const total = baseTotals[id] + chipValues[id];
+            const scoreTotal = baseTotals[id]; 
+            const chipVal = chipValues[id];
+            
             const tEl = document.getElementById(`tot-${id}`);
             if (tEl) {
-                tEl.innerText = total.toFixed(1).replace(/\.0$/, '');
-                // 視認性向上のため、TOTの文字色は白固定（デザイン方針通り）
+                tEl.innerText = scoreTotal.toFixed(1).replace(/\.0$/, '');
                 tEl.style.color = 'var(--p5-white)';
             }
 
-            // 新COIN計算: (TOT * 20) + (CHIP * 50)
             const cEl = document.getElementById(`coin-${id}`);
             if (cEl) {
-                const chip = chipValues[id];
-                const coinResult = Math.floor((total * 20) + (chip * 50));
+                const coinResult = Math.floor((scoreTotal * 20) + (chipVal * 50));
                 cEl.innerText = coinResult;
                 
-                // コインの色付け（プラスは黄色、マイナスはシアン）
                 if (coinResult > 0) cEl.style.color = 'var(--p5-yellow)';
                 else if (coinResult < 0) cEl.style.color = 'var(--p5-cyan)';
                 else cEl.style.color = 'var(--p5-white)';
@@ -209,7 +211,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
 
     // --------------------------------------------------------
-    // Submit / Save Logic (維持)
+    // Submit / Save Logic (修正版: DB定義に完全準拠)
     // --------------------------------------------------------
     document.getElementById('submit-btn').onclick = async () => {
         const btn = document.getElementById('submit-btn');
@@ -231,61 +233,81 @@ document.addEventListener('DOMContentLoaded', async () => {
             btn.querySelector('span').innerText = "SENDING...";
             badge.innerText = "INFILTRATING DATABASE...";
 
+            // 1. プレイヤー登録
             for(const name of names) {
                 await window.sb.from('players').upsert({ name: name }, { onConflict: 'name' });
             }
 
-            const { data: mstr } = await window.sb.from('players').select('id, name').in('name', names);
+            const { data: mstr, error: mError } = await window.sb.from('players').select('id, name').in('name', names);
+            if(mError) throw mError;
+
             const gameDate = document.getElementById('game-date').value;
             const finalTimestamp = new Date().toISOString();
-            
+
+            // 2. gamesテーブルへのインサート
+            const { data: gameRecord, error: gError } = await window.sb.from('games').insert([{
+                game_date: gameDate,
+                created_at: finalTimestamp
+            }]).select();
+            if(gError) throw gError;
+            const gameId = gameRecord[0].id;
+
+            // 3. game_resultsテーブルへのインサート (game_dateを除外、rankを追加)
             let resultsToInsert = [];
             const rows = document.querySelectorAll('.match-row');
-            
             rows.forEach((row, idx) => {
                 const inputs = row.querySelectorAll('.score-input');
                 const scores = Array.from(inputs).map(i => parseFloat(i.value) || 0);
                 if(scores.every(s => s === 0)) return;
 
+                // 局ごとのランク計算
+                const sortedScores = [...scores].sort((a, b) => b - a);
+
                 names.forEach((name, pIdx) => {
                     const pid = mstr.find(m => m.name === name)?.id;
                     if(pid) {
                         resultsToInsert.push({
-                            game_date: gameDate,
-                            game_index: idx + 1,
+                            game_id: gameId,
                             player_id: pid,
+                            player_name: name,
                             score: scores[pIdx],
+                            rank: sortedScores.indexOf(scores[pIdx]) + 1,
                             created_at: finalTimestamp
                         });
                     }
                 });
             });
 
-            // 集計データの作成
+            if(resultsToInsert.length > 0) {
+                const { error: rError } = await window.sb.from('game_results').insert(resultsToInsert);
+                if(rError) throw rError;
+            }
+
+            // 4. set_summariesテーブルへのインサート (tipsに修正、game_date除外)
             const grandTotals = ['a','b','c','d'].map(id => parseFloat(document.getElementById(`tot-${id}`).innerText));
             const coinTotals = ['a','b','c','d'].map(id => parseFloat(document.getElementById(`coin-${id}`).innerText));
-            const chips = ['a','b','c','d'].map(id => parseFloat(document.querySelector(`.chip-in[data-col="${id}"]`).value) || 0);
+            const chipVals = ['a','b','c','d'].map(id => parseFloat(document.querySelector(`.chip-in[data-col="${id}"]`).value) || 0);
 
             const summaryData = names.map((name, i) => ({ name, score: grandTotals[i] }));
             const sorted = [...summaryData].sort((a,b) => b.score - a.score);
             
             const summariesToInsert = names.map((name, i) => {
-                const pid = mstr.find(m => m.name === name).id;
+                const pInfo = mstr.find(m => m.name === name);
                 const rank = sorted.findIndex(s => s.name === name) + 1;
                 return {
-                    player_id: pid,
+                    game_id: gameId,
+                    player_id: pInfo.id,
                     player_name: name,
                     total_score: grandTotals[i],
                     coins: coinTotals[i],
-                    tips: chips[i], // カラム名はスキーマ維持のためtips
+                    tips: chipVals[i], 
                     final_rank: rank,
-                    created_at: finalTimestamp,
-                    game_date: gameDate
+                    created_at: finalTimestamp
                 };
             });
 
-            if(resultsToInsert.length > 0) await window.sb.from('game_results').insert(resultsToInsert);
-            await window.sb.from('set_summaries').insert(summariesToInsert);
+            const { error: sError } = await window.sb.from('set_summaries').insert(summariesToInsert);
+            if(sError) throw sError;
 
             badge.innerText = "MISSION COMPLETE";
             btn.style.background = "var(--p5-black)";
@@ -295,24 +317,31 @@ document.addEventListener('DOMContentLoaded', async () => {
             setTimeout(() => { location.href = "history.html"; }, 1000);
 
         } catch (e) {
+            console.error("Save Error:", e);
             alert("Error: " + e.message);
             btn.disabled = false;
             btn.querySelector('span').innerText = "RETRY";
+            badge.innerText = "MISSION FAILED";
         }
     };
 
     document.getElementById('add-row').onclick = window.addMatchRow;
     
-    // CHIP入力へのリスナー設定（クラス名は chip-in に更新済み）
     document.querySelectorAll('.chip-in').forEach(input => {
         input.addEventListener('input', updateTotals);
         input.addEventListener('focus', function() { this.select(); });
+        input.addEventListener('dblclick', function() {
+            const val = parseFloat(this.value) || 0;
+            if(val !== 0) {
+                this.value = (val * -1);
+                updateTotals();
+            }
+        });
     });
 
     await initRoster();
     for(let i=0; i<4; i++) window.addMatchRow();
 
-    // Admin trigger
     let entryTapCount = 0;
     let entryTapTimer;
     const entryTrigger = document.getElementById('admin-trigger');
