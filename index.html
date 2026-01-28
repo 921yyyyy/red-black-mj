@@ -109,12 +109,15 @@
             z-index: 2;
         }
 
-        /* 視認性重視：特定の装飾クラスは維持しつつ背景はクリーンに */
-        .score-pos { font-weight: bold; color: var(--p5-red); }
-        .score-neg { font-style: italic; color: #0055ff; }
+        /* CHIP入力欄：黒背景に溶けないよう文字色を調整 */
+        input.chip-in {
+            color: var(--p5-white);
+        }
+
+        .score-pos { font-weight: bold; color: var(--p5-red) !important; }
+        .score-neg { font-style: italic; color: #0055ff !important; }
         .score-zero { opacity: 0.3; }
 
-        /* フォーカス時：P5おなじみの黒背景反転 */
         input.score-input:focus, input.chip-in:focus {
             background: var(--p5-black) !important;
             color: var(--p5-white) !important;
@@ -143,7 +146,6 @@
             border: 1px solid #000;
         }
 
-        /* フッターセクション：背景を黒に固定 */
         .row-total td, .row-spec td {
             background: var(--p5-black);
             color: var(--p5-white);
@@ -152,10 +154,10 @@
             text-align: center;
             padding: 10px 0;
         }
-        /* TOTとCOINの数値部分 */
         .row-total td[id^="tot-"] { color: var(--p5-white); }
         .row-spec td[id^="coin-"] { color: var(--p5-yellow); }
 
+        /* CHIP行のBAL表示エリア */
         #chip-bal-cell {
             font-family: 'Anton';
             font-size: 12px;
@@ -165,6 +167,7 @@
             display: flex;
             align-items: center;
             justify-content: center;
+            height: 45px;
         }
 
         .p5-btn {
@@ -262,13 +265,13 @@
                             </div>
                         </td>
                     </tr>
-                    <tr class="row-spec">
+                    <tr class="row-spec chip-row">
                         <td style="background:var(--p5-black);"><span style="display:block; transform:skewX(10deg);">CHIP</span></td>
-                        <td class="bg-white"><input type="number" inputmode="decimal" class="score-input chip-in" data-col="a" placeholder="0"></td>
-                        <td class="bg-white"><input type="number" inputmode="decimal" class="score-input chip-in" data-col="b" placeholder="0"></td>
-                        <td class="bg-white"><input type="number" inputmode="decimal" class="score-input chip-in" data-col="c" placeholder="0"></td>
-                        <td class="bg-white"><input type="number" inputmode="decimal" class="score-input chip-in" data-col="d" placeholder="0"></td>
-                        <td id="chip-bal-cell">0</td>
+                        <td><input type="number" inputmode="decimal" class="score-input chip-in" data-col="a" placeholder="0"></td>
+                        <td><input type="number" inputmode="decimal" class="score-input chip-in" data-col="b" placeholder="0"></td>
+                        <td><input type="number" inputmode="decimal" class="score-input chip-in" data-col="c" placeholder="0"></td>
+                        <td><input type="number" inputmode="decimal" class="score-input chip-in" data-col="d" placeholder="0"></td>
+                        <td id="chip-bal-cell"></td>
                     </tr>
                     <tr class="row-spec">
                         <td style="background:var(--p5-black); color:var(--p5-red);"><span style="display:block; transform:skewX(10deg);">COIN</span></td>
