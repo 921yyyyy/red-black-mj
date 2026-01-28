@@ -173,7 +173,6 @@ document.addEventListener('DOMContentLoaded', async () => {
                 const val = chipVals[idx];
                 const col = input.dataset.col;
                 chipValues[col] = val;
-                // CHIPは文字色を白で固定し、クラスによる色変化を行わない
                 input.style.color = 'var(--p5-white)';
             });
 
@@ -190,7 +189,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
         // TOTとCOINの反映
         ['a','b','c','d'].forEach(id => {
-            const scoreTotal = baseTotals[id]; // CHIPを含まない純粋な合計
+            const scoreTotal = baseTotals[id]; 
             const chipVal = chipValues[id];
             
             const tEl = document.getElementById(`tot-${id}`);
@@ -201,7 +200,6 @@ document.addEventListener('DOMContentLoaded', async () => {
 
             const cEl = document.getElementById(`coin-${id}`);
             if (cEl) {
-                // COIN計算: (スコア合計 * 20) + (CHIP * 50)
                 const coinResult = Math.floor((scoreTotal * 20) + (chipVal * 50));
                 cEl.innerText = coinResult;
                 
@@ -213,7 +211,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
 
     // --------------------------------------------------------
-    // Submit / Save Logic (現行システムの堅牢なフローを移植)
+    // Submit / Save Logic (修正版: DB定義に完全準拠)
     // --------------------------------------------------------
     document.getElementById('submit-btn').onclick = async () => {
         const btn = document.getElementById('submit-btn');
@@ -226,7 +224,6 @@ document.addEventListener('DOMContentLoaded', async () => {
             return;
         }
 
-        // BALがOKでない行があるかチェック
         if(document.querySelectorAll('.btn-calc').length > 0) {
             if(!confirm("⚠️ CAUTION: Score not balanced. Force submit?")) return;
         }
@@ -236,19 +233,18 @@ document.addEventListener('DOMContentLoaded', async () => {
             btn.querySelector('span').innerText = "SENDING...";
             badge.innerText = "INFILTRATING DATABASE...";
 
-            // 1. プレイヤー登録/更新
+            // 1. プレイヤー登録
             for(const name of names) {
                 await window.sb.from('players').upsert({ name: name }, { onConflict: 'name' });
             }
 
-            // マスタ情報の取得
             const { data: mstr, error: mError } = await window.sb.from('players').select('id, name').in('name', names);
             if(mError) throw mError;
 
             const gameDate = document.getElementById('game-date').value;
             const finalTimestamp = new Date().toISOString();
 
-            // 2. 親データ (games) の作成 - これが現行システムで成功している鍵
+            // 2. gamesテーブルへのインサート
             const { data: gameRecord, error: gError } = await window.sb.from('games').insert([{
                 game_date: gameDate,
                 created_at: finalTimestamp
@@ -256,7 +252,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             if(gError) throw gError;
             const gameId = gameRecord[0].id;
 
-            // 3. 詳細データ (game_results) の作成
+            // 3. game_resultsテーブルへのインサート (game_dateを除外、rankを追加)
             let resultsToInsert = [];
             const rows = document.querySelectorAll('.match-row');
             rows.forEach((row, idx) => {
@@ -264,15 +260,18 @@ document.addEventListener('DOMContentLoaded', async () => {
                 const scores = Array.from(inputs).map(i => parseFloat(i.value) || 0);
                 if(scores.every(s => s === 0)) return;
 
+                // 局ごとのランク計算
+                const sortedScores = [...scores].sort((a, b) => b - a);
+
                 names.forEach((name, pIdx) => {
                     const pid = mstr.find(m => m.name === name)?.id;
                     if(pid) {
                         resultsToInsert.push({
                             game_id: gameId,
-                            game_date: gameDate,
-                            game_index: idx + 1,
                             player_id: pid,
+                            player_name: name,
                             score: scores[pIdx],
+                            rank: sortedScores.indexOf(scores[pIdx]) + 1,
                             created_at: finalTimestamp
                         });
                     }
@@ -284,7 +283,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                 if(rError) throw rError;
             }
 
-            // 4. サマリーデータ (set_summaries) の作成
+            // 4. set_summariesテーブルへのインサート (tipsに修正、game_date除外)
             const grandTotals = ['a','b','c','d'].map(id => parseFloat(document.getElementById(`tot-${id}`).innerText));
             const coinTotals = ['a','b','c','d'].map(id => parseFloat(document.getElementById(`coin-${id}`).innerText));
             const chipVals = ['a','b','c','d'].map(id => parseFloat(document.querySelector(`.chip-in[data-col="${id}"]`).value) || 0);
@@ -301,10 +300,9 @@ document.addEventListener('DOMContentLoaded', async () => {
                     player_name: name,
                     total_score: grandTotals[i],
                     coins: coinTotals[i],
-                    tip: chipVals[i], // カラム名を現行に合わせて tip に修正
+                    tips: chipVals[i], 
                     final_rank: rank,
-                    created_at: finalTimestamp,
-                    game_date: gameDate
+                    created_at: finalTimestamp
                 };
             });
 
@@ -329,7 +327,6 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     document.getElementById('add-row').onclick = window.addMatchRow;
     
-    // CHIP入力へのイベントリスナー
     document.querySelectorAll('.chip-in').forEach(input => {
         input.addEventListener('input', updateTotals);
         input.addEventListener('focus', function() { this.select(); });
@@ -345,7 +342,6 @@ document.addEventListener('DOMContentLoaded', async () => {
     await initRoster();
     for(let i=0; i<4; i++) window.addMatchRow();
 
-    // Admin trigger
     let entryTapCount = 0;
     let entryTapTimer;
     const entryTrigger = document.getElementById('admin-trigger');
