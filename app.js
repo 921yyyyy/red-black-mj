@@ -129,7 +129,6 @@ document.addEventListener('DOMContentLoaded', async () => {
         let baseTotals = { a:0, b:0, c:0, d:0 };
         let chipValues = { a:0, b:0, c:0, d:0 };
 
-        // 各マッチの行を集計 (TOTにはスコアのみ含める)
         document.querySelectorAll('.match-row').forEach(row => {
             const inputs = row.querySelectorAll('.score-input');
             const vals = Array.from(inputs).map(i => parseFloat(i.value) || 0);
@@ -160,34 +159,15 @@ document.addEventListener('DOMContentLoaded', async () => {
             baseTotals.d += vals[3];
         });
 
-        // CHIP欄の集計 (文字色は常に白、TOTとは分離)
-        const chipRow = document.querySelector('.chip-row');
-        if (chipRow) {
-            const chipInputs = chipRow.querySelectorAll('.chip-in');
-            const chipVals = Array.from(chipInputs).map(i => parseFloat(i.value) || 0);
-            const hasChipInput = Array.from(chipInputs).some(i => i.value !== "");
-            const chipSum = chipVals.reduce((a,b) => a+b, 0);
-            const chipBalCell = document.getElementById('chip-bal-cell');
+        // CHIP/TIP 集計
+        const chipInputs = document.querySelectorAll('.chip-in');
+        chipInputs.forEach(input => {
+            const val = parseFloat(input.value) || 0;
+            const col = input.dataset.col;
+            chipValues[col] = val;
+            input.style.color = 'var(--p5-white)';
+        });
 
-            chipInputs.forEach((input, idx) => {
-                const val = chipVals[idx];
-                const col = input.dataset.col;
-                chipValues[col] = val;
-                input.style.color = 'var(--p5-white)';
-            });
-
-            if (chipBalCell) {
-                if (!hasChipInput) {
-                    chipBalCell.innerHTML = "";
-                } else if (Math.abs(chipSum) < 0.01) {
-                    chipBalCell.innerHTML = `<span class="text-white font-black italic text-[10px]" style="transform:skewX(10deg); display:block;">OK</span>`;
-                } else {
-                    chipBalCell.innerHTML = `<button class="btn-calc" onclick="runCalc(this)">CALC</button>`;
-                }
-            }
-        }
-
-        // TOTとCOINの反映
         ['a','b','c','d'].forEach(id => {
             const scoreTotal = baseTotals[id]; 
             const chipVal = chipValues[id];
@@ -202,7 +182,6 @@ document.addEventListener('DOMContentLoaded', async () => {
             if (cEl) {
                 const coinResult = Math.floor((scoreTotal * 20) + (chipVal * 50));
                 cEl.innerText = coinResult;
-                
                 if (coinResult > 0) cEl.style.color = 'var(--p5-yellow)';
                 else if (coinResult < 0) cEl.style.color = 'var(--p5-cyan)';
                 else cEl.style.color = 'var(--p5-white)';
@@ -211,7 +190,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
 
     // --------------------------------------------------------
-    // Submit / Save Logic (修正版: DB定義に完全準拠)
+    // Submit / Save Logic (配列型カラム対応修正版)
     // --------------------------------------------------------
     document.getElementById('submit-btn').onclick = async () => {
         const btn = document.getElementById('submit-btn');
@@ -244,25 +223,23 @@ document.addEventListener('DOMContentLoaded', async () => {
             const gameDate = document.getElementById('game-date').value;
             const finalTimestamp = new Date().toISOString();
 
-            // 2. gamesテーブルへのインサート
+            // 2. gamesテーブルへのインサート (player_names は配列のまま送信)
             const { data: gameRecord, error: gError } = await window.sb.from('games').insert([{
                 game_date: gameDate,
+                player_names: names, // ★修正: joinせず配列で送る
                 created_at: finalTimestamp
             }]).select();
             if(gError) throw gError;
             const gameId = gameRecord[0].id;
 
-            // 3. game_resultsテーブルへのインサート (game_dateを除外、rankを追加)
+            // 3. game_resultsテーブル (game_dateなし, rankあり)
             let resultsToInsert = [];
             const rows = document.querySelectorAll('.match-row');
             rows.forEach((row, idx) => {
                 const inputs = row.querySelectorAll('.score-input');
                 const scores = Array.from(inputs).map(i => parseFloat(i.value) || 0);
                 if(scores.every(s => s === 0)) return;
-
-                // 局ごとのランク計算
                 const sortedScores = [...scores].sort((a, b) => b - a);
-
                 names.forEach((name, pIdx) => {
                     const pid = mstr.find(m => m.name === name)?.id;
                     if(pid) {
@@ -283,7 +260,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                 if(rError) throw rError;
             }
 
-            // 4. set_summariesテーブルへのインサート (tipsに修正、game_date除外)
+            // 4. set_summariesテーブル (tips, coins, final_rank)
             const grandTotals = ['a','b','c','d'].map(id => parseFloat(document.getElementById(`tot-${id}`).innerText));
             const coinTotals = ['a','b','c','d'].map(id => parseFloat(document.getElementById(`coin-${id}`).innerText));
             const chipVals = ['a','b','c','d'].map(id => parseFloat(document.querySelector(`.chip-in[data-col="${id}"]`).value) || 0);
@@ -299,8 +276,8 @@ document.addEventListener('DOMContentLoaded', async () => {
                     player_id: pInfo.id,
                     player_name: name,
                     total_score: grandTotals[i],
-                    coins: coinTotals[i],
-                    tips: chipVals[i], 
+                    coins: Math.floor(coinTotals[i]),
+                    tips: Math.floor(chipVals[i]), 
                     final_rank: rank,
                     created_at: finalTimestamp
                 };
@@ -308,6 +285,17 @@ document.addEventListener('DOMContentLoaded', async () => {
 
             const { error: sError } = await window.sb.from('set_summaries').insert(summariesToInsert);
             if(sError) throw sError;
+
+            // 5. アクションログの保存 (player_names は配列, target_game_id を指定)
+            const logData = {
+                action_type: 'game_save',
+                player_names: names, // ★修正: 配列で送る
+                details: `Game saved with ID: ${gameId}`,
+                target_game_id: gameId,
+                created_at: finalTimestamp
+            };
+            const { error: lError } = await window.sb.from('action_logs').insert([logData]);
+            if(lError) console.error("Log Error:", lError);
 
             badge.innerText = "MISSION COMPLETE";
             btn.style.background = "var(--p5-black)";
@@ -342,6 +330,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     await initRoster();
     for(let i=0; i<4; i++) window.addMatchRow();
 
+    // Admin trigger
     let entryTapCount = 0;
     let entryTapTimer;
     const entryTrigger = document.getElementById('admin-trigger');
