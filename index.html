@@ -18,7 +18,7 @@
             --p5-grey: #222;
             --p5-white: #f5f5f5;
             --p5-yellow: #fee600;
-            --p5-blue: #0099ff; /* P5風の鮮やかな青を追加 */
+            --p5-cyan: #00ffff;
         }
         
         body {
@@ -66,7 +66,7 @@
         .p5-table {
             width: 100%;
             border-collapse: separate; 
-            border-spacing: 1px 8px; /* ★セルの左右間隔をさらに詰め、横に大きく */
+            border-spacing: 1px 8px;
         }
         
         .p5-table th {
@@ -84,62 +84,54 @@
             transform: skewX(10deg);
         }
 
-        /* 行とセルの斜めデザイン統一 */
         .match-row td, .row-spec td, .row-total td {
             background: var(--p5-white);
             border: 2px solid var(--p5-black);
             padding: 0;
             position: relative;
             transform: skewX(-10deg);
+            overflow: hidden; 
         }
 
-        /* 入力欄の中身 */
-        input.score-input, input.tip-in {
+        input.score-input, input.chip-in {
             width: 100%;
             height: 45px;
             border: none;
             background: transparent;
             text-align: center;
             font-family: 'Anton', sans-serif;
-            font-size: 20px;
+            font-size: 22px;
             color: var(--p5-black);
             outline: none;
             transform: skewX(10deg);
             transition: all 0.2s;
+            position: relative;
+            z-index: 2;
         }
 
-        /* ★数値の色分け */
-        .score-pos { color: var(--p5-blue) !important; text-shadow: 0 0 5px rgba(0, 153, 255, 0.4); }
-        .score-neg { color: var(--p5-red) !important; text-shadow: 0 0 5px rgba(230, 0, 18, 0.4); }
-        .score-zero { color: var(--p5-black) !important; }
+        /* 視認性重視：特定の装飾クラスは維持しつつ背景はクリーンに */
+        .score-pos { font-weight: bold; color: var(--p5-red); }
+        .score-neg { font-style: italic; color: #0055ff; }
+        .score-zero { opacity: 0.3; }
 
-        /* ★フォーカス時の派手なグリッチモーション */
-        input.score-input:focus, input.tip-in:focus {
-            background: var(--p5-black);
+        /* フォーカス時：P5おなじみの黒背景反転 */
+        input.score-input:focus, input.chip-in:focus {
+            background: var(--p5-black) !important;
+            color: var(--p5-white) !important;
             animation: p5-focus-glitch 0.4s infinite alternate;
             z-index: 10;
         }
 
         @keyframes p5-focus-glitch {
-            0% {
-                box-shadow: 0 0 5px var(--p5-red), inset 0 0 10px var(--p5-red);
-                filter: brightness(1.1);
-                transform: skewX(10deg) scale(1.02);
-            }
-            100% {
-                box-shadow: -4px 0 15px var(--p5-red), 4px 0 15px var(--p5-white), inset 0 0 20px var(--p5-red);
-                filter: brightness(1.4);
-                transform: skewX(10deg) scale(1.05);
-            }
+            0% { box-shadow: 0 0 5px var(--p5-red); transform: skewX(10deg) scale(1.02); }
+            100% { box-shadow: -4px 0 15px var(--p5-red); transform: skewX(10deg) scale(1.05); }
         }
 
-        /* 項番とBALの中身 */
         .match-row td:first-child span {
             display: block;
             transform: skewX(10deg);
         }
 
-        /* CALCボタンのデザイン */
         .btn-calc {
             background: var(--p5-red);
             color: white;
@@ -150,20 +142,8 @@
             box-shadow: 2px 2px 0px #000;
             border: 1px solid #000;
         }
-        .btn-calc:active {
-            transform: skewX(10deg) scale(0.9);
-        }
 
-        #tip-bal-cell {
-            font-family: 'Anton';
-            font-size: 12px;
-            text-align: center;
-            color: var(--p5-black);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-
+        /* フッターセクション：背景を黒に固定 */
         .row-total td, .row-spec td {
             background: var(--p5-black);
             color: var(--p5-white);
@@ -172,8 +152,19 @@
             text-align: center;
             padding: 10px 0;
         }
-        .row-total td[id^="tot-"], .row-spec td[id^="coin-"] {
-            color: var(--p5-yellow);
+        /* TOTとCOINの数値部分 */
+        .row-total td[id^="tot-"] { color: var(--p5-white); }
+        .row-spec td[id^="coin-"] { color: var(--p5-yellow); }
+
+        #chip-bal-cell {
+            font-family: 'Anton';
+            font-size: 12px;
+            text-align: center;
+            background: var(--p5-white);
+            color: var(--p5-black);
+            display: flex;
+            align-items: center;
+            justify-content: center;
         }
 
         .p5-btn {
@@ -189,12 +180,7 @@
             display: block;
             transform: skewX(10deg);
         }
-        .p5-btn:active {
-            transform: skewX(-10deg) scale(0.95);
-            background: var(--p5-red);
-        }
 
-        /* Flatpickr P5 Custom */
         .flatpickr-calendar.p5-calendar {
             background: #000 !important;
             border: 3px solid var(--p5-red) !important;
@@ -203,14 +189,9 @@
             transform: skewX(-5deg);
             font-family: 'Anton', sans-serif;
         }
-        .p5-calendar .flatpickr-day.selected {
-            background: var(--p5-red) !important;
-            border-color: var(--p5-white) !important;
-        }
     </style>
 </head>
 <body class="pb-32">
-
     <div class="p5-header-bg shadow-2xl">
         <div class="container mx-auto px-4 flex justify-between items-end">
             <div>
@@ -282,12 +263,12 @@
                         </td>
                     </tr>
                     <tr class="row-spec">
-                        <td style="background:var(--p5-black);"><span style="display:block; transform:skewX(10deg);">TIP</span></td>
-                        <td><input type="number" inputmode="decimal" class="score-input tip-in text-white" data-col="a" placeholder="0"></td>
-                        <td><input type="number" inputmode="decimal" class="score-input tip-in text-white" data-col="b" placeholder="0"></td>
-                        <td><input type="number" inputmode="decimal" class="score-input tip-in text-white" data-col="c" placeholder="0"></td>
-                        <td><input type="number" inputmode="decimal" class="score-input tip-in text-white" data-col="d" placeholder="0"></td>
-                        <td id="tip-bal-cell" class="bg-gray-800 text-white">0</td>
+                        <td style="background:var(--p5-black);"><span style="display:block; transform:skewX(10deg);">CHIP</span></td>
+                        <td class="bg-white"><input type="number" inputmode="decimal" class="score-input chip-in" data-col="a" placeholder="0"></td>
+                        <td class="bg-white"><input type="number" inputmode="decimal" class="score-input chip-in" data-col="b" placeholder="0"></td>
+                        <td class="bg-white"><input type="number" inputmode="decimal" class="score-input chip-in" data-col="c" placeholder="0"></td>
+                        <td class="bg-white"><input type="number" inputmode="decimal" class="score-input chip-in" data-col="d" placeholder="0"></td>
+                        <td id="chip-bal-cell">0</td>
                     </tr>
                     <tr class="row-spec">
                         <td style="background:var(--p5-black); color:var(--p5-red);"><span style="display:block; transform:skewX(10deg);">COIN</span></td>
@@ -315,7 +296,7 @@
         </div>
     </div>
 
-    <div id="admin-trigger"></div>
+    <div id="admin-trigger" style="position: fixed; bottom: 0; left: 0; width: 60px; height: 60px; z-index: 9999;"></div>
 
     <div id="player-modal" class="fixed inset-0 z-[1000] hidden flex items-center justify-center overflow-hidden">
         <div class="absolute inset-0 bg-black/95">

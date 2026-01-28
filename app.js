@@ -1,6 +1,6 @@
 document.addEventListener('DOMContentLoaded', async () => {
     // --------------------------------------------------------
-    // Supabase Configuration
+    // Supabase Configuration (維持)
     // --------------------------------------------------------
     const SUPABASE_URL = 'https://zekfibkimvsfbnctwzti.supabase.co';
     const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inpla2ZpYmtpbXZzZmJuY3R3enRpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njg1ODU5NjYsImV4cCI6MjA4NDE2MTk2Nn0.AjW_4HvApe80USaHTAO_P7WeWaQvPo3xi3cpHm4hrFs';
@@ -8,10 +8,9 @@ document.addEventListener('DOMContentLoaded', async () => {
     window.sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
     // --------------------------------------------------------
-    // UI Initialization (Calendar & Players)
+    // UI Initialization (Calendar & Players) (維持)
     // --------------------------------------------------------
     
-    // Flatpickrの初期化
     flatpickr("#game-date", {
         dateFormat: "Y-m-d",
         defaultDate: "today",
@@ -21,12 +20,10 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
     });
 
-    // プレイヤー選択用の状態管理
     let allPlayers = []; 
     let activeTargetId = null; 
     const selectedPlayerValues = { pA: "", pB: "", pC: "", pD: "" };
 
-    // ロースターの初期取得
     async function initRoster() {
         try {
             const { data: players, error } = await window.sb.from('players').select('name');
@@ -37,7 +34,6 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
     }
 
-    // --- プレイヤー選択モーダルの制御 ---
     window.openPlayerSelector = (targetId) => {
         activeTargetId = targetId;
         const listEl = document.getElementById('modal-player-list');
@@ -46,14 +42,14 @@ document.addEventListener('DOMContentLoaded', async () => {
         allPlayers.forEach(name => {
             const btn = document.createElement('button');
             btn.className = "w-full py-4 px-6 text-left text-xl font-bold bg-white text-black transform -skew-x-12 hover:bg-red-600 hover:text-white transition-all border-l-8 border-transparent hover:border-black mb-1";
-            btn.innerHTML = `<span class="block transform skew-x-12">${name.toUpperCase()}</span>`;
+            btn.innerHTML = `<span class="block transform skew-x(12deg)">${name.toUpperCase()}</span>`;
             btn.onclick = () => selectPlayer(name);
             listEl.appendChild(btn);
         });
 
         const addBtn = document.createElement('button');
         addBtn.className = "w-full py-3 px-6 text-left text-sm font-bold bg-gray-800 text-gray-400 transform -skew-x-12 mt-4";
-        addBtn.innerHTML = `<span class="block transform skew-x-12">+ NEW RECRUIT</span>`;
+        addBtn.innerHTML = `<span class="block transform skew-x(12deg)">+ NEW RECRUIT</span>`;
         addBtn.onclick = () => {
             const newName = prompt("ENTER CODE NAME:");
             if (newName) {
@@ -70,7 +66,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         selectedPlayerValues[activeTargetId] = name;
         const displayEl = document.getElementById(`${activeTargetId}-display`);
         displayEl.innerText = name.toUpperCase();
-        displayEl.classList.add('text-red-600');
+        displayEl.style.color = 'var(--p5-red)';
         window.closePlayerSelector();
     }
 
@@ -104,23 +100,20 @@ document.addEventListener('DOMContentLoaded', async () => {
             input.addEventListener('input', updateTotals);
             input.addEventListener('focus', function() { this.select(); });
             
-            // ダブルタップ反転機能
             input.addEventListener('dblclick', function() {
                 const val = parseFloat(this.value) || 0;
                 if(val !== 0) {
-                    this.value = val * -1;
+                    this.value = (val * -1);
                     updateTotals();
                 }
             });
         });
     };
 
-    // 自動計算（歪み直し）ロジック
     window.runCalc = (btn) => {
         const row = btn.closest('tr');
         const inputs = Array.from(row.querySelectorAll('.score-input'));
         const emptyInputs = inputs.filter(i => i.value === "");
-        
         const target = emptyInputs.length > 0 ? emptyInputs[0] : inputs[3];
         
         let otherSum = 0;
@@ -135,13 +128,13 @@ document.addEventListener('DOMContentLoaded', async () => {
     };
 
     function updateTotals() {
-        let grandTotals = { a:0, b:0, c:0, d:0 };
-        let coinTotals = { a:0, b:0, c:0, d:0 };
+        let baseTotals = { a:0, b:0, c:0, d:0 };
+        let chipValues = { a:0, b:0, c:0, d:0 };
 
+        // 各マッチの行を集計
         document.querySelectorAll('.match-row').forEach(row => {
             const inputs = row.querySelectorAll('.score-input');
             
-            // ★ 個別入力欄の色分け
             inputs.forEach(input => {
                 const val = parseFloat(input.value) || 0;
                 input.classList.remove('score-pos', 'score-neg', 'score-zero');
@@ -152,82 +145,75 @@ document.addEventListener('DOMContentLoaded', async () => {
 
             const vals = Array.from(inputs).map(i => parseFloat(i.value) || 0);
             const hasInput = Array.from(inputs).some(i => i.value !== "");
-            
             const rowSum = vals.reduce((a,b) => a+b, 0);
             const balCell = row.querySelector('.bal-cell');
             
             if (!hasInput) {
                 balCell.innerHTML = "";
-            } else if (Math.abs(rowSum) < 0.01) { // 浮動小数点誤差考慮
+            } else if (Math.abs(rowSum) < 0.01) {
                 balCell.innerHTML = `<span class="text-gray-400 font-black italic text-[10px]" style="transform:skewX(10deg); display:block;">OK</span>`;
             } else {
                 balCell.innerHTML = `<button class="btn-calc" onclick="runCalc(this)">CALC</button>`;
             }
 
-            grandTotals.a += vals[0];
-            grandTotals.b += vals[1];
-            grandTotals.c += vals[2];
-            grandTotals.d += vals[3];
-
-            const scores = [
-                { id:'a', val: vals[0] },
-                { id:'b', val: vals[1] },
-                { id:'c', val: vals[2] },
-                { id:'d', val: vals[3] }
-            ];
-            scores.sort((x,y) => y.val - x.val);
-            
-            const isAllZero = vals.every(v => v === 0);
-            if (!isAllZero) {
-                const coinMap = [3, 1, -1, -3];
-                scores.forEach((p, idx) => {
-                    coinTotals[p.id] += coinMap[idx];
-                });
-            }
+            baseTotals.a += vals[0];
+            baseTotals.b += vals[1];
+            baseTotals.c += vals[2];
+            baseTotals.d += vals[3];
         });
 
-        const tipInputs = document.querySelectorAll('.tip-in');
-        let tipSum = 0;
-        tipInputs.forEach(input => {
+        // CHIP欄の集計
+        const chipInputs = document.querySelectorAll('.chip-in');
+        let chipSum = 0;
+        chipInputs.forEach(input => {
             const col = input.dataset.col;
             const val = parseFloat(input.value) || 0;
+            chipValues[col] = val;
             
-            // ★ TIP入力欄の色分け
             input.classList.remove('score-pos', 'score-neg', 'score-zero');
             if (val > 0) input.classList.add('score-pos');
             else if (val < 0) input.classList.add('score-neg');
 
-            grandTotals[col] += val;
-            tipSum += val;
+            chipSum += val;
         });
 
-        const tipBalCell = document.getElementById('tip-bal-cell');
-        tipBalCell.innerText = tipSum;
-        if(Math.abs(tipSum) > 0.01) tipBalCell.style.color = 'var(--p5-red)';
-        else tipBalCell.style.color = 'var(--p5-black)';
+        const chipBalCell = document.getElementById('chip-bal-cell');
+        if (chipBalCell) {
+            chipBalCell.innerText = chipSum;
+            chipBalCell.style.color = Math.abs(chipSum) > 0.01 ? 'var(--p5-red)' : 'var(--p5-black)';
+        }
 
+        // TOTと新ロジックCOINの反映
         ['a','b','c','d'].forEach(id => {
+            const total = baseTotals[id] + chipValues[id];
             const tEl = document.getElementById(`tot-${id}`);
-            const total = grandTotals[id];
-            tEl.innerText = total.toFixed(1).replace(/\.0$/, '');
-            
-            // 合計欄の色分け（既存の色指定をP5カラーに）
-            if(total > 0) tEl.style.color = 'var(--p5-blue)';
-            else if(total < 0) tEl.style.color = 'var(--p5-red)';
-            else tEl.style.color = 'var(--p5-yellow)';
+            if (tEl) {
+                tEl.innerText = total.toFixed(1).replace(/\.0$/, '');
+                // 視認性向上のため、TOTの文字色は白固定（デザイン方針通り）
+                tEl.style.color = 'var(--p5-white)';
+            }
 
+            // 新COIN計算: (TOT * 20) + (CHIP * 50)
             const cEl = document.getElementById(`coin-${id}`);
-            cEl.innerText = coinTotals[id];
+            if (cEl) {
+                const chip = chipValues[id];
+                const coinResult = Math.floor((total * 20) + (chip * 50));
+                cEl.innerText = coinResult;
+                
+                // コインの色付け（プラスは黄色、マイナスはシアン）
+                if (coinResult > 0) cEl.style.color = 'var(--p5-yellow)';
+                else if (coinResult < 0) cEl.style.color = 'var(--p5-cyan)';
+                else cEl.style.color = 'var(--p5-white)';
+            }
         });
     }
 
     // --------------------------------------------------------
-    // Submit / Save Logic
+    // Submit / Save Logic (維持)
     // --------------------------------------------------------
     document.getElementById('submit-btn').onclick = async () => {
         const btn = document.getElementById('submit-btn');
         const badge = document.getElementById('status-badge');
-        
         const pIds = ['pA', 'pB', 'pC', 'pD'];
         const names = pIds.map(id => selectedPlayerValues[id]);
         
@@ -250,7 +236,6 @@ document.addEventListener('DOMContentLoaded', async () => {
             }
 
             const { data: mstr } = await window.sb.from('players').select('id, name').in('name', names);
-            
             const gameDate = document.getElementById('game-date').value;
             const finalTimestamp = new Date().toISOString();
             
@@ -276,13 +261,12 @@ document.addEventListener('DOMContentLoaded', async () => {
                 });
             });
 
+            // 集計データの作成
             const grandTotals = ['a','b','c','d'].map(id => parseFloat(document.getElementById(`tot-${id}`).innerText));
             const coinTotals = ['a','b','c','d'].map(id => parseFloat(document.getElementById(`coin-${id}`).innerText));
-            const tips = ['a','b','c','d'].map(id => parseFloat(document.querySelector(`.tip-in[data-col="${id}"]`).value) || 0);
+            const chips = ['a','b','c','d'].map(id => parseFloat(document.querySelector(`.chip-in[data-col="${id}"]`).value) || 0);
 
-            const summaryData = names.map((name, i) => ({
-                name, score: grandTotals[i]
-            }));
+            const summaryData = names.map((name, i) => ({ name, score: grandTotals[i] }));
             const sorted = [...summaryData].sort((a,b) => b.score - a.score);
             
             const summariesToInsert = names.map((name, i) => {
@@ -293,16 +277,14 @@ document.addEventListener('DOMContentLoaded', async () => {
                     player_name: name,
                     total_score: grandTotals[i],
                     coins: coinTotals[i],
-                    tips: tips[i],
+                    tips: chips[i], // カラム名はスキーマ維持のためtips
                     final_rank: rank,
                     created_at: finalTimestamp,
                     game_date: gameDate
                 };
             });
 
-            if(resultsToInsert.length > 0) {
-                await window.sb.from('game_results').insert(resultsToInsert);
-            }
+            if(resultsToInsert.length > 0) await window.sb.from('game_results').insert(resultsToInsert);
             await window.sb.from('set_summaries').insert(summariesToInsert);
 
             badge.innerText = "MISSION COMPLETE";
@@ -310,9 +292,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             btn.style.color = "var(--p5-yellow)";
             btn.querySelector('span').innerText = "TAKE YOUR TREASURE";
             
-            setTimeout(() => {
-                location.href = "history.html";
-            }, 1000);
+            setTimeout(() => { location.href = "history.html"; }, 1000);
 
         } catch (e) {
             alert("Error: " + e.message);
@@ -321,40 +301,27 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
     };
 
-    // --------------------------------------------------------
-    // Event Listeners Initialization
-    // --------------------------------------------------------
     document.getElementById('add-row').onclick = window.addMatchRow;
     
-    document.querySelectorAll('.tip-in').forEach(input => {
+    // CHIP入力へのリスナー設定（クラス名は chip-in に更新済み）
+    document.querySelectorAll('.chip-in').forEach(input => {
         input.addEventListener('input', updateTotals);
         input.addEventListener('focus', function() { this.select(); });
-        input.addEventListener('dblclick', function() {
-            const val = parseFloat(this.value) || 0;
-            if(val !== 0) {
-                this.value = val * -1;
-                updateTotals();
-            }
-        });
     });
 
     await initRoster();
     for(let i=0; i<4; i++) window.addMatchRow();
 
-    // --------------------------------------------------------
-    // Admin / Easter Egg Logic
-    // --------------------------------------------------------
+    // Admin trigger
     let entryTapCount = 0;
     let entryTapTimer;
     const entryTrigger = document.getElementById('admin-trigger');
-
     if (entryTrigger) {
         entryTrigger.addEventListener('click', () => {
             entryTapCount++;
             clearTimeout(entryTapTimer);
             entryTapTimer = setTimeout(() => { entryTapCount = 0; }, 2000);
             if (entryTapCount === 5) {
-                entryTapCount = 0;
                 const pass = prompt("PHANTOM THIEF PASSWORD:");
                 if (pass === "Gemini") location.href = "admin.html";
             }
