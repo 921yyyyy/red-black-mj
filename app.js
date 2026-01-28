@@ -14,7 +14,14 @@ document.addEventListener('DOMContentLoaded', async () => {
     // --------------------------------------------------------
     // 日付の初期値設定
     const dateInput = document.getElementById('game-date');
-    dateInput.value = new Date().toISOString().split('T')[0];
+     flatpickr("#game-date", {
+        dateFormat: "Y-m-d",
+        defaultDate: "today",
+        disableMobile: "true", // これによりOS標準のUIではなく、カスタムUIが常に開きます
+        onReady: function(selectedDates, dateStr, instance) {
+            instance.calendarContainer.classList.add("p5-calendar");
+        }
+    });
 
     // TomSelectの初期化
     let playerSelects = {};
