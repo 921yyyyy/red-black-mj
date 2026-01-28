@@ -118,17 +118,24 @@
         .score-pos, .score-neg { color: var(--p5-black) !important; font-weight: bold; font-style: normal; }
         .score-zero { opacity: 0.3; }
 
-        input.score-input:focus, input.chip-in:focus {
-            background: var(--p5-black) !important;
-            color: var(--p5-white) !important;
-            animation: p5-focus-glitch 0.4s infinite alternate;
-            z-index: 10;
-        }
+        /* 修正版：レイアウトを壊さないフォーカススタイル */
+input.score-input:focus, input.chip-in:focus {
+    background: var(--p5-black) !important;
+    color: var(--p5-white) !important;
+    /* scale(1.05)を削除し、変形（skewX）を固定。影は内側(inset)にすると広がりません */
+    box-shadow: inset 0 0 10px var(--p5-red), 0 0 15px var(--p5-red);
+    outline: none;
+    z-index: 20;
+    position: relative;
+    /* アニメーションからscaleを除去 */
+    animation: p5-focus-simple 0.4s infinite alternate;
+}
 
-        @keyframes p5-focus-glitch {
-            0% { box-shadow: 0 0 5px var(--p5-red); transform: skewX(10deg) scale(1.02); }
-            100% { box-shadow: -4px 0 15px var(--p5-red); transform: skewX(10deg) scale(1.05); }
-        }
+@keyframes p5-focus-simple {
+    0% { filter: brightness(1); }
+    100% { filter: brightness(1.3); box-shadow: inset 0 0 15px var(--p5-red), 0 0 20px var(--p5-red); }
+}
+}
 
         .match-row td:first-child span { display: block; transform: skewX(10deg); }
 
