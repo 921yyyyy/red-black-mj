@@ -1,6 +1,6 @@
 document.addEventListener('DOMContentLoaded', async () => {
     // --------------------------------------------------------
-    // Supabase Configuration
+    // Supabase Configuration (維持)
     // --------------------------------------------------------
     const SUPABASE_URL = 'https://zekfibkimvsfbnctwzti.supabase.co';
     const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inpla2ZpYmtpbXZzZmJuY3R3enRpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njg1ODU5NjYsImV4cCI6MjA4NDE2MTk2Nn0.AjW_4HvApe80USaHTAO_P7WeWaQvPo3xi3cpHm4hrFs';
@@ -8,7 +8,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     window.sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
     // --------------------------------------------------------
-    // UI Initialization (Calendar & Players)
+    // UI Initialization (Calendar & Players) (維持)
     // --------------------------------------------------------
     
     flatpickr("#game-date", {
@@ -42,14 +42,14 @@ document.addEventListener('DOMContentLoaded', async () => {
         allPlayers.forEach(name => {
             const btn = document.createElement('button');
             btn.className = "w-full py-4 px-6 text-left text-xl font-bold bg-white text-black transform -skew-x-12 hover:bg-red-600 hover:text-white transition-all border-l-8 border-transparent hover:border-black mb-1";
-            btn.innerHTML = `<span class="block transform skew-x-12">${name.toUpperCase()}</span>`;
+            btn.innerHTML = `<span class="block transform skew-x(12deg)">${name.toUpperCase()}</span>`;
             btn.onclick = () => selectPlayer(name);
             listEl.appendChild(btn);
         });
 
         const addBtn = document.createElement('button');
         addBtn.className = "w-full py-3 px-6 text-left text-sm font-bold bg-gray-800 text-gray-400 transform -skew-x-12 mt-4";
-        addBtn.innerHTML = `<span class="block transform skew-x-12">+ NEW RECRUIT</span>`;
+        addBtn.innerHTML = `<span class="block transform skew-x(12deg)">+ NEW RECRUIT</span>`;
         addBtn.onclick = () => {
             const newName = prompt("ENTER CODE NAME:");
             if (newName) {
@@ -103,7 +103,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             input.addEventListener('dblclick', function() {
                 const val = parseFloat(this.value) || 0;
                 if(val !== 0) {
-                    this.value = val * -1;
+                    this.value = (val * -1);
                     updateTotals();
                 }
             });
@@ -136,10 +136,15 @@ document.addEventListener('DOMContentLoaded', async () => {
             
             inputs.forEach(input => {
                 const val = parseFloat(input.value) || 0;
+                // スラッシュ背景適用のためのクラス付け替え
                 input.classList.remove('score-pos', 'score-neg', 'score-zero');
-                if (val > 0) input.classList.add('score-pos');
-                else if (val < 0) input.classList.add('score-neg');
-                else if (input.value !== "") input.classList.add('score-zero');
+                if (val > 0) {
+                    input.classList.add('score-pos');
+                } else if (val < 0) {
+                    input.classList.add('score-neg');
+                } else if (input.value !== "") {
+                    input.classList.add('score-zero');
+                }
             });
 
             const vals = Array.from(inputs).map(i => parseFloat(i.value) || 0);
@@ -192,26 +197,28 @@ document.addEventListener('DOMContentLoaded', async () => {
         });
 
         const tipBalCell = document.getElementById('tip-bal-cell');
-        tipBalCell.innerText = tipSum;
-        tipBalCell.style.color = Math.abs(tipSum) > 0.01 ? 'var(--p5-red)' : 'var(--p5-black)';
+        if (tipBalCell) {
+            tipBalCell.innerText = tipSum;
+            tipBalCell.style.color = Math.abs(tipSum) > 0.01 ? 'var(--p5-red)' : 'var(--p5-black)';
+        }
 
         ['a','b','c','d'].forEach(id => {
             const tEl = document.getElementById(`tot-${id}`);
             const total = grandTotals[id];
-            tEl.innerText = total.toFixed(1).replace(/\.0$/, '');
-            
-            // 合計欄の文字色設定
-            if(total > 0) tEl.style.color = 'var(--p5-sp-pink)';
-            else if(total < 0) tEl.style.color = 'var(--p5-hp-cyan)';
-            else tEl.style.color = 'var(--p5-yellow)';
+            if (tEl) {
+                tEl.innerText = total.toFixed(1).replace(/\.0$/, '');
+                if(total > 0) tEl.style.color = 'var(--p5-sp-pink)';
+                else if(total < 0) tEl.style.color = 'var(--p5-hp-cyan)';
+                else tEl.style.color = 'var(--p5-yellow)';
+            }
 
             const cEl = document.getElementById(`coin-${id}`);
-            cEl.innerText = coinTotals[id];
+            if (cEl) cEl.innerText = coinTotals[id];
         });
     }
 
     // --------------------------------------------------------
-    // Submit / Save Logic
+    // Submit / Save Logic (維持)
     // --------------------------------------------------------
     document.getElementById('submit-btn').onclick = async () => {
         const btn = document.getElementById('submit-btn');
