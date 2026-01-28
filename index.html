@@ -18,9 +18,9 @@
             --p5-grey: #222;
             --p5-white: #f5f5f5;
             --p5-yellow: #fee600;
-            /* HP/SPカラーをアクセントとして定義 */
-            --p5-hp-cyan: rgba(0, 255, 235, 0.3);
-            --p5-sp-pink: rgba(255, 0, 255, 0.3);
+            /* スラッシュ用の透過アクセントカラー */
+            --p5-hp-cyan: rgba(0, 255, 235, 0.4);
+            --p5-sp-pink: rgba(255, 0, 255, 0.4);
         }
         
         body {
@@ -92,7 +92,7 @@
             padding: 0;
             position: relative;
             transform: skewX(-10deg);
-            overflow: hidden; /* 背景はみ出し防止 */
+            overflow: hidden; 
         }
 
         input.score-input, input.tip-in {
@@ -111,29 +111,37 @@
             z-index: 2;
         }
 
-        /* ★プラス/マイナスのスタイリッシュな出し分け */
+        /* ★プラス/マイナスのスタイリッシュな出し分け修正版 */
         
-        /* プラス: 太字 ＋ ピンク斜線背景 ＋ 右寄せ気味 */
+        /* プラス: 太字 ＋ ピンクの右上がり斜線 */
         .score-pos {
             font-weight: bold;
-            text-indent: 4px;
-            background: linear-gradient(110deg, transparent 40%, var(--p5-sp-pink) 45%, var(--p5-sp-pink) 55%, transparent 60%);
-            background-size: 200% 100%;
+            background: repeating-linear-gradient(
+                45deg,
+                transparent,
+                transparent 8px,
+                var(--p5-sp-pink) 8px,
+                var(--p5-sp-pink) 10px
+            ) !important;
         }
 
-        /* マイナス: 斜体 ＋ 水色斜線背景 ＋ 左寄せ気味 */
+        /* マイナス: 斜体 ＋ 水色の右下がり斜線 */
         .score-neg {
             font-style: italic;
-            text-indent: -4px;
-            background: linear-gradient(110deg, transparent 40%, var(--p5-hp-cyan) 45%, var(--p5-hp-cyan) 55%, transparent 60%);
-            background-size: 200% 100%;
+            background: repeating-linear-gradient(
+                -45deg,
+                transparent,
+                transparent 8px,
+                var(--p5-hp-cyan) 8px,
+                var(--p5-hp-cyan) 10px
+            ) !important;
         }
 
         .score-zero { color: var(--p5-black) !important; opacity: 0.5; }
 
-        /* フォーカス時 */
+        /* フォーカス時：P5おなじみの黒背景反転 */
         input.score-input:focus, input.tip-in:focus {
-            background: var(--p5-black);
+            background: var(--p5-black) !important;
             color: var(--p5-white) !important;
             animation: p5-focus-glitch 0.4s infinite alternate;
             z-index: 10;
@@ -311,7 +319,7 @@
         </div>
     </div>
 
-    <div id="admin-trigger"></div>
+    <div id="admin-trigger" style="position: fixed; bottom: 0; left: 0; width: 60px; height: 60px; z-index: 9999;"></div>
 
     <div id="player-modal" class="fixed inset-0 z-[1000] hidden flex items-center justify-center overflow-hidden">
         <div class="absolute inset-0 bg-black/95">
