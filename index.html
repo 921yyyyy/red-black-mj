@@ -109,9 +109,13 @@
             z-index: 2;
         }
 
-        /* CHIP入力欄：黒背景に溶けないよう文字色を調整 */
+        /* CHIP入力行：背景を黒にし、文字色を白で固定 */
+        .chip-row td {
+            background: var(--p5-black) !important;
+            border-color: var(--p5-white);
+        }
         input.chip-in {
-            color: var(--p5-white);
+            color: var(--p5-white) !important;
         }
 
         .score-pos { font-weight: bold; color: var(--p5-red) !important; }
@@ -162,8 +166,8 @@
             font-family: 'Anton';
             font-size: 12px;
             text-align: center;
-            background: var(--p5-white);
-            color: var(--p5-black);
+            background: var(--p5-black);
+            color: var(--p5-white);
             display: flex;
             align-items: center;
             justify-content: center;
@@ -202,7 +206,7 @@
             </div>
             <div class="mb-1">
                 <div class="bg-black p-2 transform -skew-x-12 border-2 border-white shadow-[4px_4px_0_var(--p5-yellow)]">
-                    <input type="text" id="game-date" readonly class="bg-transparent text-white font-bold transform skew-x-12 outline-none font-mono text-sm uppercase cursor-pointer">
+                    <input type="text" id="game-date" readonly class="bg-transparent text-white font-bold transform skew-x(12deg) outline-none font-mono text-sm uppercase cursor-pointer">
                 </div>
             </div>
         </div>
@@ -261,7 +265,7 @@
                     <tr>
                         <td colspan="6" class="py-2" style="background:transparent; border:none; transform:none;">
                             <div class="bg-black text-white text-xs font-bold px-2 py-1 transform -skew-x-12 inline-block border border-white">
-                                <span class="block transform skew-x-12">EXTRA CHIPS & COINS</span>
+                                <span class="block transform skew-x(12deg)">EXTRA CHIPS & COINS</span>
                             </div>
                         </td>
                     </tr>
