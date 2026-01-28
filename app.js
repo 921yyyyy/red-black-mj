@@ -129,7 +129,6 @@ document.addEventListener('DOMContentLoaded', async () => {
         let baseTotals = { a:0, b:0, c:0, d:0 };
         let chipValues = { a:0, b:0, c:0, d:0 };
 
-        // 各マッチの行を集計 (TOTにはスコアのみ含める)
         document.querySelectorAll('.match-row').forEach(row => {
             const inputs = row.querySelectorAll('.score-input');
             const vals = Array.from(inputs).map(i => parseFloat(i.value) || 0);
@@ -160,7 +159,6 @@ document.addEventListener('DOMContentLoaded', async () => {
             baseTotals.d += vals[3];
         });
 
-        // CHIP欄の集計 (文字色は常に白、TOTとは分離)
         const chipRow = document.querySelector('.chip-row');
         if (chipRow) {
             const chipInputs = chipRow.querySelectorAll('.chip-in');
@@ -187,7 +185,6 @@ document.addEventListener('DOMContentLoaded', async () => {
             }
         }
 
-        // TOTとCOINの反映
         ['a','b','c','d'].forEach(id => {
             const scoreTotal = baseTotals[id]; 
             const chipVal = chipValues[id];
@@ -202,7 +199,6 @@ document.addEventListener('DOMContentLoaded', async () => {
             if (cEl) {
                 const coinResult = Math.floor((scoreTotal * 20) + (chipVal * 50));
                 cEl.innerText = coinResult;
-                
                 if (coinResult > 0) cEl.style.color = 'var(--p5-yellow)';
                 else if (coinResult < 0) cEl.style.color = 'var(--p5-cyan)';
                 else cEl.style.color = 'var(--p5-white)';
@@ -211,7 +207,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
 
     // --------------------------------------------------------
-    // Submit / Save Logic (修正版: DB定義に完全準拠)
+    // Submit / Save Logic (修正：アクションログとgamesテーブルへの名前追加)
     // --------------------------------------------------------
     document.getElementById('submit-btn').onclick = async () => {
         const btn = document.getElementById('submit-btn');
@@ -244,25 +240,23 @@ document.addEventListener('DOMContentLoaded', async () => {
             const gameDate = document.getElementById('game-date').value;
             const finalTimestamp = new Date().toISOString();
 
-            // 2. gamesテーブルへのインサート
+            // 2. gamesテーブルへのインサート (player_names カラムへの追加)
             const { data: gameRecord, error: gError } = await window.sb.from('games').insert([{
                 game_date: gameDate,
+                player_names: names.join(', '), // ★追加: ここがnullだと履歴で困る
                 created_at: finalTimestamp
             }]).select();
             if(gError) throw gError;
             const gameId = gameRecord[0].id;
 
-            // 3. game_resultsテーブルへのインサート (game_dateを除外、rankを追加)
+            // 3. game_resultsテーブル
             let resultsToInsert = [];
             const rows = document.querySelectorAll('.match-row');
             rows.forEach((row, idx) => {
                 const inputs = row.querySelectorAll('.score-input');
                 const scores = Array.from(inputs).map(i => parseFloat(i.value) || 0);
                 if(scores.every(s => s === 0)) return;
-
-                // 局ごとのランク計算
                 const sortedScores = [...scores].sort((a, b) => b - a);
-
                 names.forEach((name, pIdx) => {
                     const pid = mstr.find(m => m.name === name)?.id;
                     if(pid) {
@@ -283,7 +277,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                 if(rError) throw rError;
             }
 
-            // 4. set_summariesテーブルへのインサート (tipsに修正、game_date除外)
+            // 4. set_summariesテーブル
             const grandTotals = ['a','b','c','d'].map(id => parseFloat(document.getElementById(`tot-${id}`).innerText));
             const coinTotals = ['a','b','c','d'].map(id => parseFloat(document.getElementById(`coin-${id}`).innerText));
             const chipVals = ['a','b','c','d'].map(id => parseFloat(document.querySelector(`.chip-in[data-col="${id}"]`).value) || 0);
@@ -308,6 +302,16 @@ document.addEventListener('DOMContentLoaded', async () => {
 
             const { error: sError } = await window.sb.from('set_summaries').insert(summariesToInsert);
             if(sError) throw sError;
+
+            // 5. アクションログの保存 (★追加: 削除機能のために必須)
+            const logData = {
+                action_type: 'game_save',
+                details: `Game saved with ID: ${gameId} by ${names.join(', ')}`,
+                game_id: gameId,
+                created_at: finalTimestamp
+            };
+            const { error: lError } = await window.sb.from('action_logs').insert([logData]);
+            if(lError) console.error("Log Error:", lError); // ログ保存失敗はアラートせずコンソールのみ
 
             badge.innerText = "MISSION COMPLETE";
             btn.style.background = "var(--p5-black)";
