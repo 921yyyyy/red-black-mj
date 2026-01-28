@@ -9,8 +9,8 @@
     <script src="https://cdn.jsdelivr.net/npm/tom-select@2.2.2/dist/js/tom-select.complete.min.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Anton&family=Roboto+Condensed:ital,wght@0,700;1,700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
-<link rel="stylesheet" type="text/css" href="https://npmcdn.com/flatpickr/dist/themes/dark.css">
-<script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+    <link rel="stylesheet" type="text/css" href="https://npmcdn.com/flatpickr/dist/themes/dark.css">
+    <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
     <style>
         :root {
             --p5-red: #E60012;
@@ -25,7 +25,6 @@
             color: var(--p5-black);
             font-family: 'Roboto Condensed', sans-serif;
             overflow-x: hidden;
-            /* 背景のアニメーションパターン */
             background-image: 
                 linear-gradient(45deg, #1a1a1a 25%, transparent 25%, transparent 75%, #1a1a1a 75%, #1a1a1a),
                 linear-gradient(45deg, #1a1a1a 25%, transparent 25%, transparent 75%, #1a1a1a 75%, #1a1a1a);
@@ -33,7 +32,6 @@
             background-size: 20px 20px;
         }
 
-        /* 汎用 P5 スキューコンテナ */
         .p5-box {
             background: var(--p5-white);
             transform: skewX(-10deg);
@@ -41,10 +39,9 @@
             box-shadow: 5px 5px 0px var(--p5-red);
         }
         .p5-box-content {
-            transform: skewX(10deg); /* 中身は戻す */
+            transform: skewX(10deg);
         }
 
-        /* ヘッダー周り */
         .p5-header-bg {
             background: var(--p5-red);
             clip-path: polygon(0 0, 100% 0, 95% 100%, 0% 100%);
@@ -60,21 +57,6 @@
             transform: rotate(-2deg);
         }
 
-        /* 入力エリア（TomSelectのカスタマイズ含む） */
-        .ts-control {
-            background-color: var(--p5-white) !important;
-            border: 2px solid var(--p5-black) !important;
-            border-radius: 0 !important;
-            font-family: 'Anton', sans-serif !important;
-            color: var(--p5-black) !important;
-            box-shadow: 3px 3px 0 rgba(0,0,0,0.8);
-        }
-        .ts-dropdown {
-            border: 2px solid var(--p5-black) !important;
-            font-family: 'Anton', sans-serif !important;
-        }
-
-        /* テーブルスタイル */
         .p5-table-container {
             overflow-x: auto;
             margin: 0 -10px;
@@ -83,7 +65,7 @@
         .p5-table {
             width: 100%;
             border-collapse: separate; 
-            border-spacing: 0 8px; /* 行間を空ける */
+            border-spacing: 4px 8px; /* 斜めが被らないよう左右の間隔も少し追加 */
         }
         
         .p5-table th {
@@ -101,24 +83,16 @@
             transform: skewX(10deg);
         }
 
-        /* 行のデザイン：各行をカードのように */
-        .match-row td {
+        /* ★行とセルの斜めデザイン統一 */
+        .match-row td, .row-spec td, .row-total td {
             background: var(--p5-white);
-            border-top: 2px solid var(--p5-black);
-            border-bottom: 2px solid var(--p5-black);
+            border: 2px solid var(--p5-black);
             padding: 0;
             position: relative;
-        }
-        .match-row td:first-child {
-            border-left: 2px solid var(--p5-black);
-            /* 左端を斜めに */
-            /* clip-path: polygon(20% 0, 100% 0, 100% 100%, 0% 100%); という手もあるがinputが切れるのでborderで対応 */
-        }
-        .match-row td:last-child {
-            border-right: 2px solid var(--p5-black);
+            transform: skewX(-10deg); /* セル自体を傾ける */
         }
 
-        /* スコア入力欄 */
+        /* ★入力欄の中身を逆方向に傾けて垂直に戻す */
         input.score-input, input.tip-in {
             width: 100%;
             height: 45px;
@@ -129,8 +103,33 @@
             font-size: 20px;
             color: var(--p5-black);
             outline: none;
-            border-right: 1px dashed #ccc;
+            transform: skewX(10deg); /* 中身を戻す */
         }
+
+        /* 項番とBALの中身も垂直に戻す */
+        .match-row td span, .bal-cell span, .row-total td, .row-spec td {
+            /* row-totalなどはtd自体が傾いているので、中のテキストを戻す必要がある場合はここ */
+        }
+        .match-row td:first-child span {
+            display: block;
+            transform: skewX(10deg);
+        }
+
+        /* ★CALCボタンのデザイン */
+        .btn-calc {
+            background: var(--p5-red);
+            color: white;
+            font-family: 'Anton', sans-serif;
+            font-size: 11px;
+            padding: 2px 8px;
+            transform: skewX(10deg) rotate(-2deg);
+            box-shadow: 2px 2px 0px #000;
+            border: 1px solid #000;
+        }
+        .btn-calc:active {
+            transform: skewX(10deg) scale(0.9);
+        }
+
         input.score-input:focus, input.tip-in:focus {
             background: var(--p5-black);
             color: var(--p5-red);
@@ -141,23 +140,16 @@
             to { box-shadow: inset 0 0 15px var(--p5-red); }
         }
 
-        /* Balance Cell */
         #tip-bal-cell {
             font-family: 'Anton';
             font-size: 12px;
             text-align: center;
             color: var(--p5-black);
+            display: flex;
+            align-items: center;
+            justify-content: center;
         }
-        .bal-ok { color: #ccc !important; }
-        .bal-ng { 
-            background: var(--p5-red) !important; 
-            color: white !important; 
-            font-weight: bold;
-            animation: shake 0.3s ease-in-out;
-        }
-        @keyframes shake { 0%{transform:translate(0,0)} 25%{transform:translate(2px,0)} 75%{transform:translate(-2px,0)} 100%{transform:translate(0,0)} }
 
-        /* Total & Coin Row */
         .row-total td, .row-spec td {
             background: var(--p5-black);
             color: var(--p5-white);
@@ -165,14 +157,11 @@
             font-size: 18px;
             text-align: center;
             padding: 10px 0;
-            border: 1px solid #333;
         }
         .row-total td[id^="tot-"], .row-spec td[id^="coin-"] {
             color: var(--p5-yellow);
-            text-shadow: 0 0 5px rgba(254, 230, 0, 0.5);
         }
 
-        /* Button P5 Style */
         .p5-btn {
             background: var(--p5-black);
             color: var(--p5-white);
@@ -181,8 +170,6 @@
             border: 2px solid var(--p5-white);
             transform: skewX(-10deg);
             transition: all 0.1s;
-            position: relative;
-            overflow: hidden;
         }
         .p5-btn span {
             display: block;
@@ -191,57 +178,21 @@
         .p5-btn:active {
             transform: skewX(-10deg) scale(0.95);
             background: var(--p5-red);
-            color: black;
-            border-color: black;
-        }
-        /* Add Row Button */
-        .add-row-btn {
-            background: transparent;
-            border: 2px dashed var(--p5-red);
-            color: var(--p5-red);
         }
 
-        /* Admin Trigger (Hidden) */
-        #admin-trigger {
-            position: fixed;
-            bottom: 0;
-            right: 0;
-            width: 50px;
-            height: 50px;
-            z-index: 9999;
+        /* Flatpickr P5 Custom */
+        .flatpickr-calendar.p5-calendar {
+            background: #000 !important;
+            border: 3px solid var(--p5-red) !important;
+            border-radius: 0 !important;
+            box-shadow: 10px 10px 0px #000, 10px 10px 0px 2px var(--p5-red) !important;
+            transform: skewX(-5deg);
+            font-family: 'Anton', sans-serif;
         }
-
-        /* TomSelect override for width */
-        .player-select-wrapper {
-            width: 100%;
-            padding: 2px;
+        .p5-calendar .flatpickr-day.selected {
+            background: var(--p5-red) !important;
+            border-color: var(--p5-white) !important;
         }
-           /* P5風カスタムスタイリング (既存のstyleタグ内に追加) */
-    .flatpickr-calendar.p5-calendar {
-        background: #000 !important;
-        border: 3px solid var(--p5-red) !important;
-        border-radius: 0 !important;
-        box-shadow: 10px 10px 0px #000, 10px 10px 0px 2px var(--p5-red) !important;
-        transform: skewX(-5deg);
-        font-family: 'Anton', sans-serif;
-    }
-    .p5-calendar .flatpickr-day.selected, 
-    .p5-calendar .flatpickr-day.selected:hover {
-        background: var(--p5-red) !important;
-        border-color: var(--p5-white) !important;
-        color: #fff !important;
-    }
-    .p5-calendar .flatpickr-months .flatpickr-month {
-        background: var(--p5-red) !important;
-        color: #fff !important;
-    }
-    .p5-calendar .flatpickr-current-month .flatpickr-monthDropdown-months {
-        background: var(--p5-red) !important;
-    }
-    .p5-calendar .flatpickr-weekday {
-        background: #000 !important;
-        color: var(--p5-red) !important;
-    }
     </style>
 </head>
 <body class="pb-32">
@@ -260,37 +211,32 @@
     </div>
 
     <div class="container mx-auto px-2">
-        
-      <div class="grid grid-cols-4 gap-1 mb-6">
-    <div class="p5-box cursor-pointer active:scale-95 transition-transform" onclick="openPlayerSelector('pA')">
-        <div class="p5-box-content p-1">
-            <div class="text-[10px] font-bold text-center bg-black text-white -mx-1 -mt-1 mb-1">PLAYER A</div>
-            <div id="pA-display" class="text-center font-bold truncate h-6 leading-6 text-sm">SELECT</div>
+        <div class="grid grid-cols-4 gap-1 mb-6">
+            <div class="p5-box cursor-pointer active:scale-95 transition-transform" onclick="openPlayerSelector('pA')">
+                <div class="p5-box-content p-1">
+                    <div class="text-[10px] font-bold text-center bg-black text-white -mx-1 -mt-1 mb-1">PLAYER A</div>
+                    <div id="pA-display" class="text-center font-bold truncate h-6 leading-6 text-sm">SELECT</div>
+                </div>
+            </div>
+            <div class="p5-box cursor-pointer active:scale-95 transition-transform" onclick="openPlayerSelector('pB')">
+                <div class="p5-box-content p-1">
+                    <div class="text-[10px] font-bold text-center bg-black text-white -mx-1 -mt-1 mb-1">PLAYER B</div>
+                    <div id="pB-display" class="text-center font-bold truncate h-6 leading-6 text-sm">SELECT</div>
+                </div>
+            </div>
+            <div class="p5-box cursor-pointer active:scale-95 transition-transform" onclick="openPlayerSelector('pC')">
+                <div class="p5-box-content p-1">
+                    <div class="text-[10px] font-bold text-center bg-black text-white -mx-1 -mt-1 mb-1">PLAYER C</div>
+                    <div id="pC-display" class="text-center font-bold truncate h-6 leading-6 text-sm">SELECT</div>
+                </div>
+            </div>
+            <div class="p5-box cursor-pointer active:scale-95 transition-transform" onclick="openPlayerSelector('pD')">
+                <div class="p5-box-content p-1">
+                    <div class="text-[10px] font-bold text-center bg-black text-white -mx-1 -mt-1 mb-1">PLAYER D</div>
+                    <div id="pD-display" class="text-center font-bold truncate h-6 leading-6 text-sm">SELECT</div>
+                </div>
+            </div>
         </div>
-    </div>
-
-    <div class="p5-box cursor-pointer active:scale-95 transition-transform" onclick="openPlayerSelector('pB')">
-        <div class="p5-box-content p-1">
-            <div class="text-[10px] font-bold text-center bg-black text-white -mx-1 -mt-1 mb-1">PLAYER B</div>
-            <div id="pB-display" class="text-center font-bold truncate h-6 leading-6 text-sm">SELECT</div>
-        </div>
-    </div>
-
-    <div class="p5-box cursor-pointer active:scale-95 transition-transform" onclick="openPlayerSelector('pC')">
-        <div class="p5-box-content p-1">
-            <div class="text-[10px] font-bold text-center bg-black text-white -mx-1 -mt-1 mb-1">PLAYER C</div>
-            <div id="pC-display" class="text-center font-bold truncate h-6 leading-6 text-sm">SELECT</div>
-        </div>
-    </div>
-
-    <div class="p5-box cursor-pointer active:scale-95 transition-transform" onclick="openPlayerSelector('pD')">
-        <div class="p5-box-content p-1">
-            <div class="text-[10px] font-bold text-center bg-black text-white -mx-1 -mt-1 mb-1">PLAYER D</div>
-            <div id="pD-display" class="text-center font-bold truncate h-6 leading-6 text-sm">SELECT</div>
-        </div>
-    </div>
-</div>
-
 
         <div class="p5-table-container">
             <table class="p5-table" id="score-table">
@@ -304,34 +250,33 @@
                         <th class="w-12"><span>BAL</span></th>
                     </tr>
                 </thead>
-                <tbody id="table-body">
-                    </tbody>
+                <tbody id="table-body"></tbody>
                 <tfoot>
-                    <tr class="row-total mt-4">
-                        <td>TOT</td>
+                    <tr class="row-total">
+                        <td style="background:var(--p5-black);"><span style="display:block; transform:skewX(10deg);">TOT</span></td>
                         <td id="tot-a">0</td>
                         <td id="tot-b">0</td>
                         <td id="tot-c">0</td>
                         <td id="tot-d">0</td>
                         <td></td>
                     </tr>
-                    <tr class="mt-2">
-                        <td colspan="6" class="py-2">
+                    <tr>
+                        <td colspan="6" class="py-2" style="background:transparent; border:none; transform:none;">
                             <div class="bg-black text-white text-xs font-bold px-2 py-1 transform -skew-x-12 inline-block border border-white">
                                 <span class="block transform skew-x-12">EXTRA CHIPS & COINS</span>
                             </div>
                         </td>
                     </tr>
                     <tr class="row-spec">
-                        <td>TIP</td>
+                        <td style="background:var(--p5-black);"><span style="display:block; transform:skewX(10deg);">TIP</span></td>
                         <td><input type="number" inputmode="decimal" class="score-input tip-in text-white" data-col="a" placeholder="0"></td>
                         <td><input type="number" inputmode="decimal" class="score-input tip-in text-white" data-col="b" placeholder="0"></td>
                         <td><input type="number" inputmode="decimal" class="score-input tip-in text-white" data-col="c" placeholder="0"></td>
                         <td><input type="number" inputmode="decimal" class="score-input tip-in text-white" data-col="d" placeholder="0"></td>
                         <td id="tip-bal-cell" class="bg-gray-800 text-white">0</td>
                     </tr>
-                    <tr class="row-spec border-t-2 border-red-600">
-                        <td style="color:var(--p5-red)">COIN</td>
+                    <tr class="row-spec">
+                        <td style="background:var(--p5-black); color:var(--p5-red);"><span style="display:block; transform:skewX(10deg);">COIN</span></td>
                         <td id="coin-a">0</td>
                         <td id="coin-b">0</td>
                         <td id="coin-c">0</td>
@@ -346,7 +291,6 @@
             <button id="add-row" class="p5-btn w-1/3 py-4 add-row-btn text-xl font-bold">
                 <span>+ ADD</span>
             </button>
-            
             <button id="submit-btn" class="p5-btn w-2/3 py-4 bg-red-600 text-2xl font-black shadow-lg border-none" style="background:var(--p5-red);">
                 <span>SEND CARD</span>
             </button>
@@ -355,32 +299,24 @@
         <div id="status-badge" class="text-center mt-4 text-xs font-mono text-gray-500 uppercase tracking-widest">
             PHANTOM THIEVES OF HEARTS
         </div>
-
     </div>
 
     <div id="admin-trigger"></div>
 
+    <div id="player-modal" class="fixed inset-0 z-[1000] hidden flex items-center justify-center overflow-hidden">
+        <div class="absolute inset-0 bg-black/95">
+            <div class="absolute inset-0 bg-red-600 opacity-20" style="clip-path: polygon(0 20%, 100% 0, 100% 80%, 0 100%);"></div>
+        </div>
+        <div class="relative z-10 w-full max-w-xs px-8">
+            <h2 class="text-white text-3xl italic font-black mb-6 border-b-4 border-white inline-block transform -rotate-3">CHOOSE ALLY</h2>
+            <div id="modal-player-list" class="flex flex-col gap-3 max-h-[60vh] overflow-y-auto pr-2 pl-4"></div>
+            <button onclick="closePlayerSelector()" class="mt-8 text-white bg-red-600 px-6 py-2 font-bold transform -skew-x-12 hover:bg-white hover:text-red-600 transition-colors">
+                CANCEL
+            </button>
+        </div>
+    </div>
+
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="app.js"></script>
-    <div id="player-modal" class="fixed inset-0 z-[1000] hidden flex items-center justify-center overflow-hidden">
-    <div class="absolute inset-0 bg-black/95">
-        <div class="absolute inset-0 bg-red-600 opacity-20" style="clip-path: polygon(0 20%, 100% 0, 100% 80%, 0 100%);"></div>
-    </div>
-    
-    <div class="relative z-10 w-full max-w-xs px-8">
-        <h2 class="text-white text-3xl italic font-black mb-6 border-b-4 border-white inline-block transform -rotate-3">
-            CHOOSE ALLY
-        </h2>
-        
-        <div id="modal-player-list" class="flex flex-col gap-3 max-h-[60vh] overflow-y-auto pr-2 pl-4">
-            </div>
-        
-        <button onclick="closePlayerSelector()" class="mt-8 text-white bg-red-600 px-6 py-2 font-bold transform -skew-x-12 hover:bg-white hover:text-red-600 transition-colors">
-            CANCEL
-        </button>
-    </div>
-</div>
-
-
 </body>
 </html>
