@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>PHANTOM STATS</title>
+    <title>MJ STATS</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdn.jsdelivr.net/npm/tom-select@2.2.2/dist/css/tom-select.css" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/tom-select@2.2.2/dist/js/tom-select.complete.min.js"></script>
@@ -48,8 +48,7 @@
             clip-path: polygon(0 0, 100% 0, 95% 100%, 0% 100%);
             padding: 1rem 0;
             margin-bottom: 20px;
-            position: relative;
-            z-index: 10;
+            position: relative; z-index: 10;
         }
         h1 {
             font-family: 'Anton', sans-serif;
@@ -79,10 +78,7 @@
             transform: skewX(-10deg);
             border: 1px solid var(--p5-red);
         }
-        .p5-table th span {
-            display: block;
-            transform: skewX(10deg);
-        }
+        .p5-table th span { display: block; transform: skewX(10deg); }
 
         .match-row td, .row-spec td, .row-total td {
             background: var(--p5-white);
@@ -101,7 +97,7 @@
             text-align: center;
             font-family: 'Anton', sans-serif;
             font-size: 22px;
-            color: var(--p5-black);
+            color: var(--p5-black); /* 黒固定 */
             outline: none;
             transform: skewX(10deg);
             transition: all 0.2s;
@@ -109,17 +105,17 @@
             z-index: 2;
         }
 
-        /* CHIP入力行：背景を黒にし、文字色を白で固定 */
+        /* CHIP入力行：背景を黒にし、文字色を白で固定。白枠を排除 */
         .chip-row td {
             background: var(--p5-black) !important;
-            border-color: var(--p5-white);
+            border: none !important; /* ★修正：白枠を消す */
         }
         input.chip-in {
             color: var(--p5-white) !important;
         }
 
-        .score-pos { font-weight: bold; color: var(--p5-red) !important; }
-        .score-neg { font-style: italic; color: #0055ff !important; }
+        /* ★修正：赤字青字を無効化（すべて黒） */
+        .score-pos, .score-neg { color: var(--p5-black) !important; font-weight: bold; font-style: normal; }
         .score-zero { opacity: 0.3; }
 
         input.score-input:focus, input.chip-in:focus {
@@ -134,10 +130,7 @@
             100% { box-shadow: -4px 0 15px var(--p5-red); transform: skewX(10deg) scale(1.05); }
         }
 
-        .match-row td:first-child span {
-            display: block;
-            transform: skewX(10deg);
-        }
+        .match-row td:first-child span { display: block; transform: skewX(10deg); }
 
         .btn-calc {
             background: var(--p5-red);
@@ -161,7 +154,6 @@
         .row-total td[id^="tot-"] { color: var(--p5-white); }
         .row-spec td[id^="coin-"] { color: var(--p5-yellow); }
 
-        /* CHIP行のBAL表示エリア */
         #chip-bal-cell {
             font-family: 'Anton';
             font-size: 12px;
@@ -183,10 +175,7 @@
             transform: skewX(-10deg);
             transition: all 0.1s;
         }
-        .p5-btn span {
-            display: block;
-            transform: skewX(10deg);
-        }
+        .p5-btn span { display: block; transform: skewX(10deg); }
 
         .flatpickr-calendar.p5-calendar {
             background: #000 !important;
