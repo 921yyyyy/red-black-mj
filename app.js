@@ -8,7 +8,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     window.sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
     // --------------------------------------------------------
-    // UI Initialization
+    // UI Initialization (Calendar & Players)
     // --------------------------------------------------------
     flatpickr("#game-date", {
         dateFormat: "Y-m-d",
@@ -57,6 +57,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             }
         };
         listEl.appendChild(addBtn);
+
         document.getElementById('player-modal').classList.remove('hidden');
     };
 
@@ -73,7 +74,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     };
 
     // --------------------------------------------------------
-    // Calculation Logic
+    // Core Logic (Calculation)
     // --------------------------------------------------------
     let rowCount = 0;
 
@@ -119,6 +120,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                 otherSum += parseFloat(i.value) || 0;
             }
         });
+
         target.value = -otherSum;
         updateTotals();
     };
@@ -143,35 +145,38 @@ document.addEventListener('DOMContentLoaded', async () => {
             const rowSum = vals.reduce((a,b) => a+b, 0);
             const balCell = row.querySelector('.bal-cell');
             
-            if (!hasInput) { balCell.innerHTML = ""; }
-            else if (Math.abs(rowSum) < 0.01) {
+            if (!hasInput) {
+                balCell.innerHTML = "";
+            } else if (Math.abs(rowSum) < 0.01) {
                 balCell.innerHTML = `<span class="text-gray-400 font-black italic text-[10px]" style="transform:skewX(10deg); display:block;">OK</span>`;
             } else {
                 balCell.innerHTML = `<button class="btn-calc" onclick="runCalc(this)">CALC</button>`;
             }
-            baseTotals.a += vals[0]; baseTotals.b += vals[1]; baseTotals.c += vals[2]; baseTotals.d += vals[3];
+
+            baseTotals.a += vals[0];
+            baseTotals.b += vals[1];
+            baseTotals.c += vals[2];
+            baseTotals.d += vals[3];
         });
 
-        const chipInputs = document.querySelectorAll('.tip-in');
-        let chipSum = 0;
+        // CHIP/TIP 集計
+        const chipInputs = document.querySelectorAll('.chip-in');
         chipInputs.forEach(input => {
             const val = parseFloat(input.value) || 0;
             const col = input.dataset.col;
             chipValues[col] = val;
-            chipSum += val;
+            input.style.color = 'var(--p5-white)';
         });
-        const tipBalCell = document.getElementById('tip-bal-cell');
-        if (Math.abs(chipSum) < 0.01) {
-            tipBalCell.innerHTML = `<span class="text-white font-black italic text-[10px]">OK</span>`;
-        } else {
-            tipBalCell.innerHTML = `<span class="text-red-500 font-black italic text-[10px]">ERR</span>`;
-        }
 
         ['a','b','c','d'].forEach(id => {
             const scoreTotal = baseTotals[id]; 
             const chipVal = chipValues[id];
+            
             const tEl = document.getElementById(`tot-${id}`);
-            if (tEl) tEl.innerText = scoreTotal.toFixed(1).replace(/\.0$/, '');
+            if (tEl) {
+                tEl.innerText = scoreTotal.toFixed(1).replace(/\.0$/, '');
+                tEl.style.color = 'var(--p5-white)';
+            }
 
             const cEl = document.getElementById(`coin-${id}`);
             if (cEl) {
@@ -185,16 +190,21 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
 
     // --------------------------------------------------------
-    // Submit Logic (Fixed for Array Type Columns)
+    // Submit / Save Logic (配列型カラム対応修正版)
     // --------------------------------------------------------
     document.getElementById('submit-btn').onclick = async () => {
         const btn = document.getElementById('submit-btn');
         const badge = document.getElementById('status-badge');
-        const names = ['pA', 'pB', 'pC', 'pD'].map(id => selectedPlayerValues[id]);
+        const pIds = ['pA', 'pB', 'pC', 'pD'];
+        const names = pIds.map(id => selectedPlayerValues[id]);
         
         if(names.some(n => !n)) {
-            alert("⚠️ WARNING: Allies not assembled!");
+            alert("⚠️ WARNING: Allies not assembled! Select all players.");
             return;
+        }
+
+        if(document.querySelectorAll('.btn-calc').length > 0) {
+            if(!confirm("⚠️ CAUTION: Score not balanced. Force submit?")) return;
         }
 
         try {
@@ -206,83 +216,92 @@ document.addEventListener('DOMContentLoaded', async () => {
             for(const name of names) {
                 await window.sb.from('players').upsert({ name: name }, { onConflict: 'name' });
             }
-            const { data: mstr } = await window.sb.from('players').select('id, name').in('name', names);
+
+            const { data: mstr, error: mError } = await window.sb.from('players').select('id, name').in('name', names);
+            if(mError) throw mError;
 
             const gameDate = document.getElementById('game-date').value;
             const finalTimestamp = new Date().toISOString();
 
-            // 2. gamesテーブル (player_names は配列型として送信)
+            // 2. gamesテーブルへのインサート (player_names は配列のまま送信)
             const { data: gameRecord, error: gError } = await window.sb.from('games').insert([{
                 game_date: gameDate,
-                player_names: names, // ★修正: 文字列変換せず配列のまま送る
+                player_names: names, // ★修正: joinせず配列で送る
                 created_at: finalTimestamp
             }]).select();
             if(gError) throw gError;
             const gameId = gameRecord[0].id;
 
-            // 3. game_resultsテーブル
+            // 3. game_resultsテーブル (game_dateなし, rankあり)
             let resultsToInsert = [];
-            document.querySelectorAll('.match-row').forEach((row, idx) => {
+            const rows = document.querySelectorAll('.match-row');
+            rows.forEach((row, idx) => {
                 const inputs = row.querySelectorAll('.score-input');
                 const scores = Array.from(inputs).map(i => parseFloat(i.value) || 0);
                 if(scores.every(s => s === 0)) return;
                 const sortedScores = [...scores].sort((a, b) => b - a);
                 names.forEach((name, pIdx) => {
                     const pid = mstr.find(m => m.name === name)?.id;
-                    resultsToInsert.push({
-                        game_id: gameId,
-                        player_id: pid,
-                        player_name: name,
-                        score: scores[pIdx],
-                        rank: sortedScores.indexOf(scores[pIdx]) + 1,
-                        created_at: finalTimestamp
-                    });
+                    if(pid) {
+                        resultsToInsert.push({
+                            game_id: gameId,
+                            player_id: pid,
+                            player_name: name,
+                            score: scores[pIdx],
+                            rank: sortedScores.indexOf(scores[pIdx]) + 1,
+                            created_at: finalTimestamp
+                        });
+                    }
                 });
             });
+
             if(resultsToInsert.length > 0) {
                 const { error: rError } = await window.sb.from('game_results').insert(resultsToInsert);
                 if(rError) throw rError;
             }
 
-            // 4. set_summariesテーブル
+            // 4. set_summariesテーブル (tips, coins, final_rank)
+            const grandTotals = ['a','b','c','d'].map(id => parseFloat(document.getElementById(`tot-${id}`).innerText));
+            const coinTotals = ['a','b','c','d'].map(id => parseFloat(document.getElementById(`coin-${id}`).innerText));
+            const chipVals = ['a','b','c','d'].map(id => parseFloat(document.querySelector(`.chip-in[data-col="${id}"]`).value) || 0);
+
+            const summaryData = names.map((name, i) => ({ name, score: grandTotals[i] }));
+            const sorted = [...summaryData].sort((a,b) => b.score - a.score);
+            
             const summariesToInsert = names.map((name, i) => {
-                const colId = ['a','b','c','d'][i];
-                const totalScore = parseFloat(document.getElementById(`tot-${colId}`).innerText);
-                const coinTotal = parseInt(document.getElementById(`coin-${colId}`).innerText);
-                const chipVal = parseInt(document.querySelector(`.tip-in[data-col="${colId}"]`).value) || 0;
-                
+                const pInfo = mstr.find(m => m.name === name);
+                const rank = sorted.findIndex(s => s.name === name) + 1;
                 return {
                     game_id: gameId,
-                    player_id: mstr.find(m => m.name === name).id,
+                    player_id: pInfo.id,
                     player_name: name,
-                    total_score: totalScore,
-                    coins: coinTotal,
-                    tips: chipVal,
-                    final_rank: 0, // 下記で計算
+                    total_score: grandTotals[i],
+                    coins: Math.floor(coinTotals[i]),
+                    tips: Math.floor(chipVals[i]), 
+                    final_rank: rank,
                     created_at: finalTimestamp
                 };
-            });
-
-            // ランク計算
-            const sortedSummaries = [...summariesToInsert].sort((a, b) => b.total_score - a.total_score);
-            summariesToInsert.forEach(s => {
-                s.final_rank = sortedSummaries.findIndex(ss => ss.player_name === s.player_name) + 1;
             });
 
             const { error: sError } = await window.sb.from('set_summaries').insert(summariesToInsert);
             if(sError) throw sError;
 
-            // 5. action_logsテーブル (player_names は配列型)
-            const { error: lError } = await window.sb.from('action_logs').insert([{
+            // 5. アクションログの保存 (player_names は配列, target_game_id を指定)
+            const logData = {
                 action_type: 'game_save',
-                player_names: names, // ★修正: 配列のまま送る
-                details: `Game ID: ${gameId} saved`,
+                player_names: names, // ★修正: 配列で送る
+                details: `Game saved with ID: ${gameId}`,
                 target_game_id: gameId,
                 created_at: finalTimestamp
-            }]);
+            };
+            const { error: lError } = await window.sb.from('action_logs').insert([logData]);
             if(lError) console.error("Log Error:", lError);
 
             badge.innerText = "MISSION COMPLETE";
+            btn.style.background = "var(--p5-black)";
+            btn.style.color = "var(--p5-yellow)";
+            btn.querySelector('span').innerText = "TAKE YOUR TREASURE";
+            
             setTimeout(() => { location.href = "history.html"; }, 1000);
 
         } catch (e) {
@@ -290,14 +309,40 @@ document.addEventListener('DOMContentLoaded', async () => {
             alert("Error: " + e.message);
             btn.disabled = false;
             btn.querySelector('span').innerText = "RETRY";
+            badge.innerText = "MISSION FAILED";
         }
     };
 
     document.getElementById('add-row').onclick = window.addMatchRow;
-    document.querySelectorAll('.tip-in').forEach(input => {
+    
+    document.querySelectorAll('.chip-in').forEach(input => {
         input.addEventListener('input', updateTotals);
+        input.addEventListener('focus', function() { this.select(); });
+        input.addEventListener('dblclick', function() {
+            const val = parseFloat(this.value) || 0;
+            if(val !== 0) {
+                this.value = (val * -1);
+                updateTotals();
+            }
+        });
     });
 
     await initRoster();
     for(let i=0; i<4; i++) window.addMatchRow();
+
+    // Admin trigger
+    let entryTapCount = 0;
+    let entryTapTimer;
+    const entryTrigger = document.getElementById('admin-trigger');
+    if (entryTrigger) {
+        entryTrigger.addEventListener('click', () => {
+            entryTapCount++;
+            clearTimeout(entryTapTimer);
+            entryTapTimer = setTimeout(() => { entryTapCount = 0; }, 2000);
+            if (entryTapCount === 5) {
+                const pass = prompt("PHANTOM THIEF PASSWORD:");
+                if (pass === "Gemini") location.href = "admin.html";
+            }
+        });
+    }
 });
