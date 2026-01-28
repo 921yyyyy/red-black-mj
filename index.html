@@ -3,85 +3,189 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>STATS ENTRY | MLB PRO</title>
+    <title>M-STATS | P5 EDITION</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Anton&family=Roboto+Condensed:wght@700&display=swap" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/tom-select@2.2.2/dist/css/tom-select.css" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/tom-select@2.2.2/dist/js/tom-select.complete.min.js"></script>
+    
     <style>
-        body { background-color: #070d1c; color: white; font-family: 'Inter', sans-serif; -webkit-font-smoothing: antialiased; }
-        .mlb-table { width: 100%; table-layout: fixed; border-collapse: collapse; background: white; border-radius: 4px; overflow: hidden; }
-        .mlb-table th { background: #041e42; color: white; font-size: 9px; text-transform: uppercase; padding: 12px 2px; border-right: 1px solid rgba(255,255,255,0.1); }
-        .mlb-table td { color: #1e293b; font-size: 11px; font-weight: 800; border-bottom: 1px solid #e2e8f0; border-right: 1px solid #e2e8f0; height: 44px; padding: 0; text-align: center; }
-        .mlb-table tr:nth-child(even) td { background: #f8fafc; }
-        
-        /* 数値入力: テンキー強制と黒文字 */
-        .score-input { width: 100%; height: 100%; border: none; background: transparent; text-align: center; font-weight: 900; font-size: 14px; color: #1e293b; outline: none; -webkit-appearance: none; margin: 0; }
-        .score-input:focus { background: #fff7ed; box-shadow: inset 0 0 0 2px #f97316; }
+        :root {
+            --p5-red: #d32f2f;
+            --p5-black: #121212;
+            --p5-white: #ffffff;
+        }
 
-        .row-spec { background: #f1f5f9 !important; }
-        .row-spec td { color: #041e42; }
-        .col-label { background: #f1f5f9 !important; font-size: 9px !important; color: #64748b !important; width: 45px; }
-        .pts-positive { color: #1d4ed8 !important; }
-        .pts-negative { color: #be123c !important; }
-        .btn-calc { background: #041e42; color: white; font-size: 8px; padding: 4px 8px; border-radius: 2px; font-weight: 900; }
-        
-        .ts-control { background: #161e2d !important; color: white !important; border: 1px solid #334155 !important; font-weight: 700; border-radius: 8px !important; }
-        .ts-control input { color: white !important; }
+        body { 
+            background-color: var(--p5-black); 
+            color: white; 
+            font-family: 'Roboto Condensed', sans-serif;
+            background-image: repeating-linear-gradient(45deg, #1a1a1a 0, #1a1a1a 1px, transparent 0, transparent 50%);
+            background-size: 10px 10px;
+            -webkit-font-smoothing: antialiased;
+            overflow-x: hidden;
+        }
+
+        /* テーブル：斜め度合いを -2deg に抑制（キツすぎない調整） */
+        .p5-table-container {
+            transform: skew(-2deg);
+            background: var(--p5-white);
+            padding: 2px;
+            box-shadow: 10px 10px 0px var(--p5-red);
+            margin: 10px;
+        }
+
+        .mlb-table { 
+            width: 100%; 
+            table-layout: fixed; 
+            border-collapse: collapse; 
+            background: white; 
+            transform: skew(0deg); /* コンテナで傾けているので中身は戻す */
+        }
+
+        .mlb-table th { 
+            background: var(--p5-black); 
+            color: white; 
+            font-family: 'Anton', sans-serif;
+            font-size: 12px; 
+            text-transform: uppercase; 
+            padding: 12px 2px; 
+            border: 1px solid var(--p5-red);
+        }
+
+        .mlb-table td { 
+            color: var(--p5-black); 
+            font-size: 14px; 
+            font-weight: 900; 
+            border: 1px solid #ddd;
+            text-align: center;
+        }
+
+        /* 入力エリアのP5エフェクト */
+        .score-input {
+            width: 100%;
+            height: 45px;
+            text-align: center;
+            font-family: 'Anton', sans-serif;
+            font-size: 18px;
+            border: none;
+            outline: none;
+            transition: all 0.2s;
+        }
+
+        .score-input:focus {
+            background: var(--p5-red);
+            color: white;
+            transform: scale(1.1) skew(-5deg); /* 入力中だけ少し主張 */
+            z-index: 10;
+        }
+
+        /* ボタン系：攻撃的なデザイン */
+        .p5-btn-main {
+            background: var(--p5-red);
+            color: white;
+            font-family: 'Anton', sans-serif;
+            clip-path: polygon(5% 0%, 100% 0%, 95% 100%, 0% 100%);
+            transition: all 0.2s;
+        }
+
+        .p5-btn-main:active {
+            transform: scale(0.95) rotate(-2deg);
+            filter: brightness(1.2);
+        }
+
+        /* プレイヤー選択(TomSelect)のカスタマイズ */
+        .ts-control {
+            background: #000 !important;
+            color: white !important;
+            border: 2px solid var(--p5-red) !important;
+            border-radius: 0 !important;
+            transform: skew(-5deg);
+        }
+
+        /* ヘッダータイトル */
+        .p5-title {
+            font-family: 'Anton', sans-serif;
+            font-size: 40px;
+            line-height: 0.8;
+            color: white;
+            text-shadow: 4px 4px var(--p5-red);
+            transform: rotate(-3deg);
+            margin-bottom: 20px;
+        }
+
+        .row-spec { background: #f3f4f6 !important; border-top: 3px solid var(--p5-black); }
     </style>
 </head>
-<body class="pb-32 px-4">
-    <div class="max-w-md mx-auto space-y-6">
-        <header class="py-6">
+<body class="pb-32 p-4">
 
-<h1 class="text-xl font-bold">DATA <span id="admin-trigger" style="cursor: default;">ENTRY</span></h1>
+    <h1 class="p5-title italic">STATS<br>ENTRY</h1>
 
-        </header>
-
-        <div class="px-1">
-            <label class="text-[10px] text-slate-500 font-black tracking-widest uppercase block mb-2 ml-1">Game Date</label>
-            <input type="date" id="game-date" 
-                class="bg-[#161e2d] text-white border border-white/10 rounded-lg p-3 w-full font-mono font-bold focus:border-orange-500 outline-none transition-all shadow-inner">
+    <div class="mb-6 space-y-4">
+        <input type="date" id="game-date" class="w-full bg-black border-2 border-[--p5-red] p-3 font-bold text-white outline-none">
+        
+        <div class="grid grid-cols-2 gap-4">
+            <div><select id="pA" placeholder="PLAYER A"></select></div>
+            <div><select id="pB" placeholder="PLAYER B"></select></div>
+            <div><select id="pC" placeholder="PLAYER C"></select></div>
+            <div><select id="pD" placeholder="PLAYER D"></select></div>
         </div>
-
-        <div class="grid grid-cols-2 gap-3 mb-6">
-
-            <select id="pA" class="roster-select"></select><select id="pB" class="roster-select"></select>
-            <select id="pC" class="roster-select"></select><select id="pD" class="roster-select"></select>
-        </div>
-
-        <div class="shadow-2xl">
-            <table class="mlb-table">
-                <thead>
-                    <tr><th style="width: 45px;">NO</th><th>A</th><th>B</th><th>C</th><th>D</th><th style="width: 55px;">BAL</th></tr>
-                </thead>
-                <tbody id="match-body"></tbody>
-                <tfoot>
-                    <tr class="row-spec"><td class="col-label">TOT</td><td id="tot-a">0</td><td id="tot-b">0</td><td id="tot-c">0</td><td id="tot-d">0</td><td></td></tr>
-                    <tr class="row-spec"><td class="col-label">DIF</td><td id="dif-a">0</td><td id="dif-b">0</td><td id="dif-c">0</td><td id="dif-d">0</td><td></td></tr>
-                    <tr class="row-spec row-tip" style="border-top: 1px solid #cbd5e1;">
-                        <td class="col-label">CHIPS</td>
-                        <td><input type="number" inputmode="decimal" class="score-input tip-in" data-col="a"></td>
-                        <td><input type="number" inputmode="decimal" class="score-input tip-in" data-col="b"></td>
-                        <td><input type="number" inputmode="decimal" class="score-input tip-in" data-col="c"></td>
-                        <td><input type="number" inputmode="decimal" class="score-input tip-in" data-col="d"></td>
-                        <td id="tip-bal-cell"></td>
-                    </tr>
-                    <tr class="row-spec" style="background: #eef2ff !important; border-top: 2px solid #041e42;">
-                        <td class="col-label" style="color:#041e42">COIN</td>
-                        <td id="coin-a" style="color:#f97316">0</td><td id="coin-b" style="color:#f97316">0</td><td id="coin-c" style="color:#f97316">0</td><td id="coin-d" style="color:#f97316">0</td><td></td>
-                    </tr>
-                </tfoot>
-            </table>
-            <div class="p-3 bg-white/5 border-t border-white/10 flex justify-between items-center">
-                <button id="add-row" class="text-[10px] font-black text-orange-500 uppercase tracking-widest">+ Add New Match</button>
-                <div id="status-badge" class="text-[9px] font-bold text-slate-500 uppercase">Analyzing...</div>
-            </div>
-        </div>
-
-        <button id="submit-btn" class="w-full py-5 bg-[#041e42] hover:bg-orange-600 text-white font-black rounded-xl shadow-xl transition-all active:scale-[0.98] uppercase tracking-[0.2em] text-xs disabled:opacity-20" disabled>Finalize Stats</button>
     </div>
+
+    <div class="p5-table-container">
+        <table class="mlb-table">
+            <thead>
+                <tr>
+                    <th style="width: 40px;">#</th>
+                    <th>A</th><th>B</th><th>C</th><th>D</th>
+                    <th style="width: 50px;">BAL</th>
+                </tr>
+            </thead>
+            <tbody id="gridBody">
+                </tbody>
+            <tfoot>
+                <tr class="row-spec">
+                    <td class="font-black text-[10px] py-3">TOTAL</td>
+                    <td id="tot-a">0</td><td id="tot-b">0</td><td id="tot-c">0</td><td id="tot-d">0</td>
+                    <td id="total-bal">0</td>
+                </tr>
+                <tr class="row-spec">
+                    <td class="font-black text-[10px] py-3 text-red-600">TIPS</td>
+                    <td><input type="number" class="score-input tip-in" data-col="a"></td>
+                    <td><input type="number" class="score-input tip-in" data-col="b"></td>
+                    <td><input type="number" class="score-input tip-in" data-col="c"></td>
+                    <td><input type="number" class="score-input tip-in" data-col="d"></td>
+                    <td id="tip-bal-cell"></td>
+                </tr>
+                <tr class="row-spec" style="background: var(--p5-red) !important;">
+                    <td class="font-black text-[10px] py-3 text-white">COIN</td>
+                    <td id="coin-a" class="text-white font-black text-lg">0</td>
+                    <td id="coin-b" class="text-white font-black text-lg">0</td>
+                    <td id="coin-c" class="text-white font-black text-lg">0</td>
+                    <td id="coin-d" class="text-white font-black text-lg">0</td>
+                    <td></td>
+                </tr>
+            </tfoot>
+        </table>
+    </div>
+
+    <div class="flex justify-between items-center mt-4 px-2">
+        <button id="add-row" class="font-black text-[--p5-red] uppercase tracking-tighter border-b-2 border-[--p5-red]">
+            + Add New Match
+        </button>
+        <div id="status-badge" class="text-[10px] font-bold bg-white text-black px-2 skew-x-[-15deg]">
+            SYSTEM_READY
+        </div>
+    </div>
+
+    <div class="fixed bottom-24 left-4 right-4 z-50">
+        <button id="submit-btn" class="p5-btn-main w-full py-5 text-2xl shadow-2xl">
+            SAVE TO DATA_BASE
+        </button>
+    </div>
+
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <script src="app.js"></script>
     <script src="navbar.js"></script>
+    <script src="app.js"></script>
 </body>
 </html>
