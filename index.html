@@ -261,32 +261,36 @@
 
     <div class="container mx-auto px-2">
         
-        <div class="grid grid-cols-4 gap-1 mb-6">
-            <div class="p5-box">
-                <div class="p5-box-content p-1">
-                    <div class="text-[10px] font-bold text-center bg-black text-white -mx-1 -mt-1 mb-1">PLAYER A</div>
-                    <select id="pA" class="w-full"></select>
-                </div>
-            </div>
-            <div class="p5-box">
-                <div class="p5-box-content p-1">
-                    <div class="text-[10px] font-bold text-center bg-black text-white -mx-1 -mt-1 mb-1">PLAYER B</div>
-                    <select id="pB" class="w-full"></select>
-                </div>
-            </div>
-            <div class="p5-box">
-                <div class="p5-box-content p-1">
-                    <div class="text-[10px] font-bold text-center bg-black text-white -mx-1 -mt-1 mb-1">PLAYER C</div>
-                    <select id="pC" class="w-full"></select>
-                </div>
-            </div>
-            <div class="p5-box">
-                <div class="p5-box-content p-1">
-                    <div class="text-[10px] font-bold text-center bg-black text-white -mx-1 -mt-1 mb-1">PLAYER D</div>
-                    <select id="pD" class="w-full"></select>
-                </div>
-            </div>
+      <div class="grid grid-cols-4 gap-1 mb-6">
+    <div class="p5-box cursor-pointer active:scale-95 transition-transform" onclick="openPlayerSelector('pA')">
+        <div class="p5-box-content p-1">
+            <div class="text-[10px] font-bold text-center bg-black text-white -mx-1 -mt-1 mb-1">PLAYER A</div>
+            <div id="pA-display" class="text-center font-bold truncate h-6 leading-6 text-sm">SELECT</div>
         </div>
+    </div>
+
+    <div class="p5-box cursor-pointer active:scale-95 transition-transform" onclick="openPlayerSelector('pB')">
+        <div class="p5-box-content p-1">
+            <div class="text-[10px] font-bold text-center bg-black text-white -mx-1 -mt-1 mb-1">PLAYER B</div>
+            <div id="pB-display" class="text-center font-bold truncate h-6 leading-6 text-sm">SELECT</div>
+        </div>
+    </div>
+
+    <div class="p5-box cursor-pointer active:scale-95 transition-transform" onclick="openPlayerSelector('pC')">
+        <div class="p5-box-content p-1">
+            <div class="text-[10px] font-bold text-center bg-black text-white -mx-1 -mt-1 mb-1">PLAYER C</div>
+            <div id="pC-display" class="text-center font-bold truncate h-6 leading-6 text-sm">SELECT</div>
+        </div>
+    </div>
+
+    <div class="p5-box cursor-pointer active:scale-95 transition-transform" onclick="openPlayerSelector('pD')">
+        <div class="p5-box-content p-1">
+            <div class="text-[10px] font-bold text-center bg-black text-white -mx-1 -mt-1 mb-1">PLAYER D</div>
+            <div id="pD-display" class="text-center font-bold truncate h-6 leading-6 text-sm">SELECT</div>
+        </div>
+    </div>
+</div>
+
 
         <div class="p5-table-container">
             <table class="p5-table" id="score-table">
@@ -358,5 +362,23 @@
 
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="app.js"></script>
+    <div id="player-modal" class="fixed inset-0 z-[1000] hidden flex items-center justify-center overflow-hidden">
+    <div class="absolute inset-0 bg-black/95">
+        <div class="absolute inset-0 bg-red-600 opacity-20" style="clip-path: polygon(0 20%, 100% 0, 100% 80%, 0 100%);"></div>
+    </div>
+    
+    <div class="relative z-10 w-full max-w-xs px-6">
+        <h2 class="text-white text-3xl italic font-black mb-6 border-b-4 border-white inline-block transform -rotate-3">
+            CHOOSE ALLY
+        </h2>
+        <div id="modal-player-list" class="flex flex-col gap-3 max-h-[60vh] overflow-y-auto pr-2">
+            </div>
+        
+        <button onclick="closePlayerSelector()" class="mt-8 text-white bg-red-600 px-6 py-2 font-bold transform -skew-x-12 hover:bg-white hover:text-red-600 transition-colors">
+            CANCEL
+        </button>
+    </div>
+</div>
+
 </body>
 </html>
