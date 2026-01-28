@@ -1,6 +1,6 @@
 document.addEventListener('DOMContentLoaded', async () => {
     // --------------------------------------------------------
-    // Supabase Configuration (維持)
+    // Supabase Configuration
     // --------------------------------------------------------
     const SUPABASE_URL = 'https://zekfibkimvsfbnctwzti.supabase.co';
     const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inpla2ZpYmtpbXZzZmJuY3R3enRpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njg1ODU5NjYsImV4cCI6MjA4NDE2MTk2Nn0.AjW_4HvApe80USaHTAO_P7WeWaQvPo3xi3cpHm4hrFs';
@@ -8,9 +8,8 @@ document.addEventListener('DOMContentLoaded', async () => {
     window.sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
     // --------------------------------------------------------
-    // UI Initialization (Calendar & Players) (維持)
+    // UI Initialization (Calendar & Players)
     // --------------------------------------------------------
-    
     flatpickr("#game-date", {
         dateFormat: "Y-m-d",
         defaultDate: "today",
@@ -99,7 +98,6 @@ document.addEventListener('DOMContentLoaded', async () => {
         tr.querySelectorAll('input').forEach(input => {
             input.addEventListener('input', updateTotals);
             input.addEventListener('focus', function() { this.select(); });
-            
             input.addEventListener('dblclick', function() {
                 const val = parseFloat(this.value) || 0;
                 if(val !== 0) {
@@ -110,7 +108,6 @@ document.addEventListener('DOMContentLoaded', async () => {
         });
     };
 
-    // 補填計算ロジック（スコア行とCHIP行で共通）
     window.runCalc = (btn) => {
         const row = btn.closest('tr');
         const inputs = Array.from(row.querySelectorAll('input'));
@@ -132,7 +129,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         let baseTotals = { a:0, b:0, c:0, d:0 };
         let chipValues = { a:0, b:0, c:0, d:0 };
 
-        // 各マッチの行を集計
+        // 各マッチの行を集計 (TOTにはスコアのみ含める)
         document.querySelectorAll('.match-row').forEach(row => {
             const inputs = row.querySelectorAll('.score-input');
             const vals = Array.from(inputs).map(i => parseFloat(i.value) || 0);
@@ -163,7 +160,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             baseTotals.d += vals[3];
         });
 
-        // CHIP欄の集計とバリデーション
+        // CHIP欄の集計 (文字色は常に白、TOTとは分離)
         const chipRow = document.querySelector('.chip-row');
         if (chipRow) {
             const chipInputs = chipRow.querySelectorAll('.chip-in');
@@ -176,12 +173,8 @@ document.addEventListener('DOMContentLoaded', async () => {
                 const val = chipVals[idx];
                 const col = input.dataset.col;
                 chipValues[col] = val;
-
-                // スタイル更新（文字色はCSSで白ベースだが、プラスマイナスの色分けを適用）
-                input.classList.remove('score-pos', 'score-neg', 'score-zero');
-                if (val > 0) input.classList.add('score-pos');
-                else if (val < 0) input.classList.add('score-neg');
-                else if (input.value !== "") input.classList.add('score-zero');
+                // CHIPは文字色を白で固定し、クラスによる色変化を行わない
+                input.style.color = 'var(--p5-white)';
             });
 
             if (chipBalCell) {
@@ -195,19 +188,21 @@ document.addEventListener('DOMContentLoaded', async () => {
             }
         }
 
-        // TOTと新ロジックCOINの反映
+        // TOTとCOINの反映
         ['a','b','c','d'].forEach(id => {
-            const total = baseTotals[id] + chipValues[id];
+            const scoreTotal = baseTotals[id]; // CHIPを含まない純粋な合計
+            const chipVal = chipValues[id];
+            
             const tEl = document.getElementById(`tot-${id}`);
             if (tEl) {
-                tEl.innerText = total.toFixed(1).replace(/\.0$/, '');
+                tEl.innerText = scoreTotal.toFixed(1).replace(/\.0$/, '');
                 tEl.style.color = 'var(--p5-white)';
             }
 
             const cEl = document.getElementById(`coin-${id}`);
             if (cEl) {
-                const chip = chipValues[id];
-                const coinResult = Math.floor((total * 20) + (chip * 50));
+                // COIN計算: (スコア合計 * 20) + (CHIP * 50)
+                const coinResult = Math.floor((scoreTotal * 20) + (chipVal * 50));
                 cEl.innerText = coinResult;
                 
                 if (coinResult > 0) cEl.style.color = 'var(--p5-yellow)';
@@ -218,7 +213,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
 
     // --------------------------------------------------------
-    // Submit / Save Logic (維持)
+    // Submit / Save Logic (現行システムの堅牢なフローを移植)
     // --------------------------------------------------------
     document.getElementById('submit-btn').onclick = async () => {
         const btn = document.getElementById('submit-btn');
@@ -231,6 +226,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             return;
         }
 
+        // BALがOKでない行があるかチェック
         if(document.querySelectorAll('.btn-calc').length > 0) {
             if(!confirm("⚠️ CAUTION: Score not balanced. Force submit?")) return;
         }
@@ -240,17 +236,29 @@ document.addEventListener('DOMContentLoaded', async () => {
             btn.querySelector('span').innerText = "SENDING...";
             badge.innerText = "INFILTRATING DATABASE...";
 
+            // 1. プレイヤー登録/更新
             for(const name of names) {
                 await window.sb.from('players').upsert({ name: name }, { onConflict: 'name' });
             }
 
-            const { data: mstr } = await window.sb.from('players').select('id, name').in('name', names);
+            // マスタ情報の取得
+            const { data: mstr, error: mError } = await window.sb.from('players').select('id, name').in('name', names);
+            if(mError) throw mError;
+
             const gameDate = document.getElementById('game-date').value;
             const finalTimestamp = new Date().toISOString();
-            
+
+            // 2. 親データ (games) の作成 - これが現行システムで成功している鍵
+            const { data: gameRecord, error: gError } = await window.sb.from('games').insert([{
+                game_date: gameDate,
+                created_at: finalTimestamp
+            }]).select();
+            if(gError) throw gError;
+            const gameId = gameRecord[0].id;
+
+            // 3. 詳細データ (game_results) の作成
             let resultsToInsert = [];
             const rows = document.querySelectorAll('.match-row');
-            
             rows.forEach((row, idx) => {
                 const inputs = row.querySelectorAll('.score-input');
                 const scores = Array.from(inputs).map(i => parseFloat(i.value) || 0);
@@ -260,6 +268,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                     const pid = mstr.find(m => m.name === name)?.id;
                     if(pid) {
                         resultsToInsert.push({
+                            game_id: gameId,
                             game_date: gameDate,
                             game_index: idx + 1,
                             player_id: pid,
@@ -270,30 +279,37 @@ document.addEventListener('DOMContentLoaded', async () => {
                 });
             });
 
+            if(resultsToInsert.length > 0) {
+                const { error: rError } = await window.sb.from('game_results').insert(resultsToInsert);
+                if(rError) throw rError;
+            }
+
+            // 4. サマリーデータ (set_summaries) の作成
             const grandTotals = ['a','b','c','d'].map(id => parseFloat(document.getElementById(`tot-${id}`).innerText));
             const coinTotals = ['a','b','c','d'].map(id => parseFloat(document.getElementById(`coin-${id}`).innerText));
-            const chips = ['a','b','c','d'].map(id => parseFloat(document.querySelector(`.chip-in[data-col="${id}"]`).value) || 0);
+            const chipVals = ['a','b','c','d'].map(id => parseFloat(document.querySelector(`.chip-in[data-col="${id}"]`).value) || 0);
 
             const summaryData = names.map((name, i) => ({ name, score: grandTotals[i] }));
             const sorted = [...summaryData].sort((a,b) => b.score - a.score);
             
             const summariesToInsert = names.map((name, i) => {
-                const pid = mstr.find(m => m.name === name).id;
+                const pInfo = mstr.find(m => m.name === name);
                 const rank = sorted.findIndex(s => s.name === name) + 1;
                 return {
-                    player_id: pid,
+                    game_id: gameId,
+                    player_id: pInfo.id,
                     player_name: name,
                     total_score: grandTotals[i],
                     coins: coinTotals[i],
-                    tips: chips[i], 
+                    tip: chipVals[i], // カラム名を現行に合わせて tip に修正
                     final_rank: rank,
                     created_at: finalTimestamp,
                     game_date: gameDate
                 };
             });
 
-            if(resultsToInsert.length > 0) await window.sb.from('game_results').insert(resultsToInsert);
-            await window.sb.from('set_summaries').insert(summariesToInsert);
+            const { error: sError } = await window.sb.from('set_summaries').insert(summariesToInsert);
+            if(sError) throw sError;
 
             badge.innerText = "MISSION COMPLETE";
             btn.style.background = "var(--p5-black)";
@@ -303,15 +319,17 @@ document.addEventListener('DOMContentLoaded', async () => {
             setTimeout(() => { location.href = "history.html"; }, 1000);
 
         } catch (e) {
+            console.error("Save Error:", e);
             alert("Error: " + e.message);
             btn.disabled = false;
             btn.querySelector('span').innerText = "RETRY";
+            badge.innerText = "MISSION FAILED";
         }
     };
 
     document.getElementById('add-row').onclick = window.addMatchRow;
     
-    // CHIP入力へのイベントリスナー（バリデーション、フォーカス、ダブルクリック反転）
+    // CHIP入力へのイベントリスナー
     document.querySelectorAll('.chip-in').forEach(input => {
         input.addEventListener('input', updateTotals);
         input.addEventListener('focus', function() { this.select(); });
