@@ -8,7 +8,9 @@
     <link href="https://cdn.jsdelivr.net/npm/tom-select@2.2.2/dist/css/tom-select.css" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/tom-select@2.2.2/dist/js/tom-select.complete.min.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Anton&family=Roboto+Condensed:ital,wght@0,700;1,700&display=swap" rel="stylesheet">
-    
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+<link rel="stylesheet" type="text/css" href="https://npmcdn.com/flatpickr/dist/themes/dark.css">
+<script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
     <style>
         :root {
             --p5-red: #E60012;
@@ -214,6 +216,32 @@
             width: 100%;
             padding: 2px;
         }
+           /* P5風カスタムスタイリング (既存のstyleタグ内に追加) */
+    .flatpickr-calendar.p5-calendar {
+        background: #000 !important;
+        border: 3px solid var(--p5-red) !important;
+        border-radius: 0 !important;
+        box-shadow: 10px 10px 0px #000, 10px 10px 0px 2px var(--p5-red) !important;
+        transform: skewX(-5deg);
+        font-family: 'Anton', sans-serif;
+    }
+    .p5-calendar .flatpickr-day.selected, 
+    .p5-calendar .flatpickr-day.selected:hover {
+        background: var(--p5-red) !important;
+        border-color: var(--p5-white) !important;
+        color: #fff !important;
+    }
+    .p5-calendar .flatpickr-months .flatpickr-month {
+        background: var(--p5-red) !important;
+        color: #fff !important;
+    }
+    .p5-calendar .flatpickr-current-month .flatpickr-monthDropdown-months {
+        background: var(--p5-red) !important;
+    }
+    .p5-calendar .flatpickr-weekday {
+        background: #000 !important;
+        color: var(--p5-red) !important;
+    }
     </style>
 </head>
 <body class="pb-32">
@@ -225,7 +253,7 @@
             </div>
             <div class="mb-1">
                 <div class="bg-black p-2 transform -skew-x-12 border-2 border-white shadow-[4px_4px_0_var(--p5-yellow)]">
-                    <input type="date" id="game-date" class="bg-transparent text-white font-bold transform skew-x-12 outline-none font-mono text-sm uppercase">
+                    <input type="text" id="game-date" readonly class="bg-transparent text-white font-bold transform skew-x-12 outline-none font-mono text-sm uppercase cursor-pointer">
                 </div>
             </div>
         </div>
