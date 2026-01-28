@@ -18,9 +18,7 @@
             --p5-grey: #222;
             --p5-white: #f5f5f5;
             --p5-yellow: #fee600;
-            /* HP/SPカラーの定義 */
-            --p5-hp-cyan: #00ffeb;   /* マイナス：HPの水色 */
-            --p5-sp-pink: #ff00ff;   /* プラス：SPのピンク */
+            --p5-blue: #0099ff; /* P5風の鮮やかな青を追加 */
         }
         
         body {
@@ -68,7 +66,7 @@
         .p5-table {
             width: 100%;
             border-collapse: separate; 
-            border-spacing: 1px 12px; /* 行間の隙間を少し広げて下線を強調 */
+            border-spacing: 1px 8px; /* ★セルの左右間隔をさらに詰め、横に大きく */
         }
         
         .p5-table th {
@@ -86,12 +84,11 @@
             transform: skewX(10deg);
         }
 
-        /* ★セル枠：下罫線のみのデザインに変更 */
+        /* 行とセルの斜めデザイン統一 */
         .match-row td, .row-spec td, .row-total td {
-            background: var(--p5-black);
-            /* 下線のみ：太めで短めに見せるためにpaddingで調整 */
-            border-bottom: 4px solid var(--p5-white);
-            padding: 0 4px; 
+            background: var(--p5-white);
+            border: 2px solid var(--p5-black);
+            padding: 0;
             position: relative;
             transform: skewX(-10deg);
         }
@@ -104,53 +101,42 @@
             background: transparent;
             text-align: center;
             font-family: 'Anton', sans-serif;
-            font-size: 22px;
-            color: var(--p5-white);
+            font-size: 20px;
+            color: var(--p5-black);
             outline: none;
             transform: skewX(10deg);
             transition: all 0.2s;
         }
 
-        /* ★HP/SP風の数値色分け */
-        .score-pos { 
-            color: var(--p5-sp-pink) !important; 
-            text-shadow: 0 0 8px rgba(255, 0, 255, 0.6); 
-        }
-        .score-neg { 
-            color: var(--p5-hp-cyan) !important; 
-            text-shadow: 0 0 8px rgba(0, 255, 235, 0.6); 
-        }
-        .score-zero { color: #666 !important; }
+        /* ★数値の色分け */
+        .score-pos { color: var(--p5-blue) !important; text-shadow: 0 0 5px rgba(0, 153, 255, 0.4); }
+        .score-neg { color: var(--p5-red) !important; text-shadow: 0 0 5px rgba(230, 0, 18, 0.4); }
+        .score-zero { color: var(--p5-black) !important; }
 
-        /* フォーカス時のグリッチ：下線の色も変える */
+        /* ★フォーカス時の派手なグリッチモーション */
         input.score-input:focus, input.tip-in:focus {
-            background: #1a1a1a;
+            background: var(--p5-black);
             animation: p5-focus-glitch 0.4s infinite alternate;
             z-index: 10;
         }
 
         @keyframes p5-focus-glitch {
             0% {
-                box-shadow: 0 2px 0 var(--p5-white);
+                box-shadow: 0 0 5px var(--p5-red), inset 0 0 10px var(--p5-red);
                 filter: brightness(1.1);
                 transform: skewX(10deg) scale(1.02);
             }
             100% {
-                box-shadow: 0 4px 10px var(--p5-sp-pink);
-                filter: brightness(1.5);
+                box-shadow: -4px 0 15px var(--p5-red), 4px 0 15px var(--p5-white), inset 0 0 20px var(--p5-red);
+                filter: brightness(1.4);
                 transform: skewX(10deg) scale(1.05);
             }
         }
 
-        /* 項番の背景：下線デザインに合わせて調整 */
-        .match-row td:first-child {
-            background: var(--p5-white);
-            border-bottom: 4px solid var(--p5-red); /* 項番だけ下線を赤に */
-        }
+        /* 項番とBALの中身 */
         .match-row td:first-child span {
             display: block;
             transform: skewX(10deg);
-            color: var(--p5-black);
         }
 
         /* CALCボタンのデザイン */
@@ -172,7 +158,7 @@
             font-family: 'Anton';
             font-size: 12px;
             text-align: center;
-            color: var(--p5-white);
+            color: var(--p5-black);
             display: flex;
             align-items: center;
             justify-content: center;
@@ -185,13 +171,7 @@
             font-size: 18px;
             text-align: center;
             padding: 10px 0;
-            border-bottom: 4px solid var(--p5-white);
         }
-        /* TOTとCOINの行は下線を赤にして差別化 */
-        .row-total td, .row-spec:last-child td {
-            border-bottom: 4px solid var(--p5-red);
-        }
-
         .row-total td[id^="tot-"], .row-spec td[id^="coin-"] {
             color: var(--p5-yellow);
         }
@@ -287,7 +267,7 @@
                 <tbody id="table-body"></tbody>
                 <tfoot>
                     <tr class="row-total">
-                        <td style="background:var(--p5-black); border-bottom:4px solid var(--p5-red);"><span style="display:block; transform:skewX(10deg); color:var(--p5-red);">TOT</span></td>
+                        <td style="background:var(--p5-black);"><span style="display:block; transform:skewX(10deg);">TOT</span></td>
                         <td id="tot-a">0</td>
                         <td id="tot-b">0</td>
                         <td id="tot-c">0</td>
@@ -303,14 +283,14 @@
                     </tr>
                     <tr class="row-spec">
                         <td style="background:var(--p5-black);"><span style="display:block; transform:skewX(10deg);">TIP</span></td>
-                        <td><input type="number" inputmode="decimal" class="score-input tip-in" data-col="a" placeholder="0"></td>
-                        <td><input type="number" inputmode="decimal" class="score-input tip-in" data-col="b" placeholder="0"></td>
-                        <td><input type="number" inputmode="decimal" class="score-input tip-in" data-col="c" placeholder="0"></td>
-                        <td><input type="number" inputmode="decimal" class="score-input tip-in" data-col="d" placeholder="0"></td>
-                        <td id="tip-bal-cell">0</td>
+                        <td><input type="number" inputmode="decimal" class="score-input tip-in text-white" data-col="a" placeholder="0"></td>
+                        <td><input type="number" inputmode="decimal" class="score-input tip-in text-white" data-col="b" placeholder="0"></td>
+                        <td><input type="number" inputmode="decimal" class="score-input tip-in text-white" data-col="c" placeholder="0"></td>
+                        <td><input type="number" inputmode="decimal" class="score-input tip-in text-white" data-col="d" placeholder="0"></td>
+                        <td id="tip-bal-cell" class="bg-gray-800 text-white">0</td>
                     </tr>
                     <tr class="row-spec">
-                        <td style="background:var(--p5-black); color:var(--p5-red); border-bottom:4px solid var(--p5-red);"><span style="display:block; transform:skewX(10deg);">COIN</span></td>
+                        <td style="background:var(--p5-black); color:var(--p5-red);"><span style="display:block; transform:skewX(10deg);">COIN</span></td>
                         <td id="coin-a">0</td>
                         <td id="coin-b">0</td>
                         <td id="coin-c">0</td>
