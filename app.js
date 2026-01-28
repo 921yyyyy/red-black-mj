@@ -110,9 +110,10 @@ document.addEventListener('DOMContentLoaded', async () => {
         });
     };
 
+    // 補填計算ロジック（スコア行とCHIP行で共通）
     window.runCalc = (btn) => {
         const row = btn.closest('tr');
-        const inputs = Array.from(row.querySelectorAll('.score-input'));
+        const inputs = Array.from(row.querySelectorAll('input'));
         const emptyInputs = inputs.filter(i => i.value === "");
         const target = emptyInputs.length > 0 ? emptyInputs[0] : inputs[3];
         
@@ -134,6 +135,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         // 各マッチの行を集計
         document.querySelectorAll('.match-row').forEach(row => {
             const inputs = row.querySelectorAll('.score-input');
+            const vals = Array.from(inputs).map(i => parseFloat(i.value) || 0);
             
             inputs.forEach(input => {
                 const val = parseFloat(input.value) || 0;
@@ -143,7 +145,6 @@ document.addEventListener('DOMContentLoaded', async () => {
                 else if (input.value !== "") input.classList.add('score-zero');
             });
 
-            const vals = Array.from(inputs).map(i => parseFloat(i.value) || 0);
             const hasInput = Array.from(inputs).some(i => i.value !== "");
             const rowSum = vals.reduce((a,b) => a+b, 0);
             const balCell = row.querySelector('.bal-cell');
@@ -162,25 +163,36 @@ document.addEventListener('DOMContentLoaded', async () => {
             baseTotals.d += vals[3];
         });
 
-        // CHIP欄の集計
-        const chipInputs = document.querySelectorAll('.chip-in');
-        let chipSum = 0;
-        chipInputs.forEach(input => {
-            const col = input.dataset.col;
-            const val = parseFloat(input.value) || 0;
-            chipValues[col] = val;
-            
-            input.classList.remove('score-pos', 'score-neg', 'score-zero');
-            if (val > 0) input.classList.add('score-pos');
-            else if (val < 0) input.classList.add('score-neg');
+        // CHIP欄の集計とバリデーション
+        const chipRow = document.querySelector('.chip-row');
+        if (chipRow) {
+            const chipInputs = chipRow.querySelectorAll('.chip-in');
+            const chipVals = Array.from(chipInputs).map(i => parseFloat(i.value) || 0);
+            const hasChipInput = Array.from(chipInputs).some(i => i.value !== "");
+            const chipSum = chipVals.reduce((a,b) => a+b, 0);
+            const chipBalCell = document.getElementById('chip-bal-cell');
 
-            chipSum += val;
-        });
+            chipInputs.forEach((input, idx) => {
+                const val = chipVals[idx];
+                const col = input.dataset.col;
+                chipValues[col] = val;
 
-        const chipBalCell = document.getElementById('chip-bal-cell');
-        if (chipBalCell) {
-            chipBalCell.innerText = chipSum;
-            chipBalCell.style.color = Math.abs(chipSum) > 0.01 ? 'var(--p5-red)' : 'var(--p5-black)';
+                // スタイル更新（文字色はCSSで白ベースだが、プラスマイナスの色分けを適用）
+                input.classList.remove('score-pos', 'score-neg', 'score-zero');
+                if (val > 0) input.classList.add('score-pos');
+                else if (val < 0) input.classList.add('score-neg');
+                else if (input.value !== "") input.classList.add('score-zero');
+            });
+
+            if (chipBalCell) {
+                if (!hasChipInput) {
+                    chipBalCell.innerHTML = "";
+                } else if (Math.abs(chipSum) < 0.01) {
+                    chipBalCell.innerHTML = `<span class="text-white font-black italic text-[10px]" style="transform:skewX(10deg); display:block;">OK</span>`;
+                } else {
+                    chipBalCell.innerHTML = `<button class="btn-calc" onclick="runCalc(this)">CALC</button>`;
+                }
+            }
         }
 
         // TOTと新ロジックCOINの反映
@@ -189,18 +201,15 @@ document.addEventListener('DOMContentLoaded', async () => {
             const tEl = document.getElementById(`tot-${id}`);
             if (tEl) {
                 tEl.innerText = total.toFixed(1).replace(/\.0$/, '');
-                // 視認性向上のため、TOTの文字色は白固定（デザイン方針通り）
                 tEl.style.color = 'var(--p5-white)';
             }
 
-            // 新COIN計算: (TOT * 20) + (CHIP * 50)
             const cEl = document.getElementById(`coin-${id}`);
             if (cEl) {
                 const chip = chipValues[id];
                 const coinResult = Math.floor((total * 20) + (chip * 50));
                 cEl.innerText = coinResult;
                 
-                // コインの色付け（プラスは黄色、マイナスはシアン）
                 if (coinResult > 0) cEl.style.color = 'var(--p5-yellow)';
                 else if (coinResult < 0) cEl.style.color = 'var(--p5-cyan)';
                 else cEl.style.color = 'var(--p5-white)';
@@ -261,7 +270,6 @@ document.addEventListener('DOMContentLoaded', async () => {
                 });
             });
 
-            // 集計データの作成
             const grandTotals = ['a','b','c','d'].map(id => parseFloat(document.getElementById(`tot-${id}`).innerText));
             const coinTotals = ['a','b','c','d'].map(id => parseFloat(document.getElementById(`coin-${id}`).innerText));
             const chips = ['a','b','c','d'].map(id => parseFloat(document.querySelector(`.chip-in[data-col="${id}"]`).value) || 0);
@@ -277,7 +285,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                     player_name: name,
                     total_score: grandTotals[i],
                     coins: coinTotals[i],
-                    tips: chips[i], // カラム名はスキーマ維持のためtips
+                    tips: chips[i], 
                     final_rank: rank,
                     created_at: finalTimestamp,
                     game_date: gameDate
@@ -303,10 +311,17 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     document.getElementById('add-row').onclick = window.addMatchRow;
     
-    // CHIP入力へのリスナー設定（クラス名は chip-in に更新済み）
+    // CHIP入力へのイベントリスナー（バリデーション、フォーカス、ダブルクリック反転）
     document.querySelectorAll('.chip-in').forEach(input => {
         input.addEventListener('input', updateTotals);
         input.addEventListener('focus', function() { this.select(); });
+        input.addEventListener('dblclick', function() {
+            const val = parseFloat(this.value) || 0;
+            if(val !== 0) {
+                this.value = (val * -1);
+                updateTotals();
+            }
+        });
     });
 
     await initRoster();
