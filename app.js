@@ -89,7 +89,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         const tr = document.createElement('tr');
         tr.className = 'match-row';
         tr.innerHTML = `
-            <td class="text-center font-bold bg-gray-200" style="color:black;">
+            <td class="text-center font-bold">
                 <span>${rowCount}</span>
             </td>
             <td><input type="number" inputmode="decimal" class="score-input" data-col="a"></td>
@@ -141,7 +141,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         document.querySelectorAll('.match-row').forEach(row => {
             const inputs = row.querySelectorAll('.score-input');
             
-            // ★ 個別入力欄の色分け
+            // ★ 個別入力欄の色分け（P5 HP/SPカラー連動）
             inputs.forEach(input => {
                 const val = parseFloat(input.value) || 0;
                 input.classList.remove('score-pos', 'score-neg', 'score-zero');
@@ -203,18 +203,26 @@ document.addEventListener('DOMContentLoaded', async () => {
 
         const tipBalCell = document.getElementById('tip-bal-cell');
         tipBalCell.innerText = tipSum;
+        // バランスが崩れている時は赤系（HPシアンとは別）で警告
         if(Math.abs(tipSum) > 0.01) tipBalCell.style.color = 'var(--p5-red)';
-        else tipBalCell.style.color = 'var(--p5-black)';
+        else tipBalCell.style.color = 'var(--p5-white)';
 
         ['a','b','c','d'].forEach(id => {
             const tEl = document.getElementById(`tot-${id}`);
             const total = grandTotals[id];
             tEl.innerText = total.toFixed(1).replace(/\.0$/, '');
             
-            // 合計欄の色分け（既存の色指定をP5カラーに）
-            if(total > 0) tEl.style.color = 'var(--p5-blue)';
-            else if(total < 0) tEl.style.color = 'var(--p5-red)';
-            else tEl.style.color = 'var(--p5-yellow)';
+            // ★ 合計欄の色分け（HP/SPカラーを適用）
+            if(total > 0) {
+                tEl.style.color = 'var(--p5-sp-pink)';
+                tEl.style.textShadow = '0 0 8px rgba(255, 0, 255, 0.6)';
+            } else if(total < 0) {
+                tEl.style.color = 'var(--p5-hp-cyan)';
+                tEl.style.textShadow = '0 0 8px rgba(0, 255, 235, 0.6)';
+            } else {
+                tEl.style.color = 'var(--p5-yellow)'; // 0はイエローで強調
+                tEl.style.textShadow = 'none';
+            }
 
             const cEl = document.getElementById(`coin-${id}`);
             cEl.innerText = coinTotals[id];
@@ -276,8 +284,14 @@ document.addEventListener('DOMContentLoaded', async () => {
                 });
             });
 
-            const grandTotals = ['a','b','c','d'].map(id => parseFloat(document.getElementById(`tot-${id}`).innerText));
-            const coinTotals = ['a','b','c','d'].map(id => parseFloat(document.getElementById(`coin-${id}`).innerText));
+            const grandTotals = ['a','b','c','d'].map(id => {
+                const val = document.getElementById(`tot-${id}`).innerText;
+                return parseFloat(val) || 0;
+            });
+            const coinTotals = ['a','b','c','d'].map(id => {
+                const val = document.getElementById(`coin-${id}`).innerText;
+                return parseFloat(val) || 0;
+            });
             const tips = ['a','b','c','d'].map(id => parseFloat(document.querySelector(`.tip-in[data-col="${id}"]`).value) || 0);
 
             const summaryData = names.map((name, i) => ({
