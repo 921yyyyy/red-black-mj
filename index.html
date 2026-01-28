@@ -3,85 +3,334 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>STATS ENTRY | MLB PRO</title>
+    <title>PHANTOM STATS</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdn.jsdelivr.net/npm/tom-select@2.2.2/dist/css/tom-select.css" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/tom-select@2.2.2/dist/js/tom-select.complete.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Anton&family=Roboto+Condensed:ital,wght@0,700;1,700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+    <link rel="stylesheet" type="text/css" href="https://npmcdn.com/flatpickr/dist/themes/dark.css">
+    <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
     <style>
-        body { background-color: #070d1c; color: white; font-family: 'Inter', sans-serif; -webkit-font-smoothing: antialiased; }
-        .mlb-table { width: 100%; table-layout: fixed; border-collapse: collapse; background: white; border-radius: 4px; overflow: hidden; }
-        .mlb-table th { background: #041e42; color: white; font-size: 9px; text-transform: uppercase; padding: 12px 2px; border-right: 1px solid rgba(255,255,255,0.1); }
-        .mlb-table td { color: #1e293b; font-size: 11px; font-weight: 800; border-bottom: 1px solid #e2e8f0; border-right: 1px solid #e2e8f0; height: 44px; padding: 0; text-align: center; }
-        .mlb-table tr:nth-child(even) td { background: #f8fafc; }
+        :root {
+            --p5-red: #E60012;
+            --p5-black: #101010;
+            --p5-grey: #222;
+            --p5-white: #f5f5f5;
+            --p5-yellow: #fee600;
+            --p5-blue: #0099ff; /* P5風の鮮やかな青を追加 */
+        }
         
-        /* 数値入力: テンキー強制と黒文字 */
-        .score-input { width: 100%; height: 100%; border: none; background: transparent; text-align: center; font-weight: 900; font-size: 14px; color: #1e293b; outline: none; -webkit-appearance: none; margin: 0; }
-        .score-input:focus { background: #fff7ed; box-shadow: inset 0 0 0 2px #f97316; }
+        body {
+            background-color: var(--p5-black);
+            color: var(--p5-black);
+            font-family: 'Roboto Condensed', sans-serif;
+            overflow-x: hidden;
+            background-image: 
+                linear-gradient(45deg, #1a1a1a 25%, transparent 25%, transparent 75%, #1a1a1a 75%, #1a1a1a),
+                linear-gradient(45deg, #1a1a1a 25%, transparent 25%, transparent 75%, #1a1a1a 75%, #1a1a1a);
+            background-position: 0 0, 10px 10px;
+            background-size: 20px 20px;
+        }
 
-        .row-spec { background: #f1f5f9 !important; }
-        .row-spec td { color: #041e42; }
-        .col-label { background: #f1f5f9 !important; font-size: 9px !important; color: #64748b !important; width: 45px; }
-        .pts-positive { color: #1d4ed8 !important; }
-        .pts-negative { color: #be123c !important; }
-        .btn-calc { background: #041e42; color: white; font-size: 8px; padding: 4px 8px; border-radius: 2px; font-weight: 900; }
+        .p5-box {
+            background: var(--p5-white);
+            transform: skewX(-10deg);
+            border: 3px solid var(--p5-black);
+            box-shadow: 5px 5px 0px var(--p5-red);
+        }
+        .p5-box-content {
+            transform: skewX(10deg);
+        }
+
+        .p5-header-bg {
+            background: var(--p5-red);
+            clip-path: polygon(0 0, 100% 0, 95% 100%, 0% 100%);
+            padding: 1rem 0;
+            margin-bottom: 20px;
+            position: relative;
+            z-index: 10;
+        }
+        h1 {
+            font-family: 'Anton', sans-serif;
+            letter-spacing: 2px;
+            text-shadow: 2px 2px 0px #000;
+            transform: rotate(-2deg);
+        }
+
+        .p5-table-container {
+            overflow-x: auto;
+            margin: 0 -10px;
+            padding: 0 10px;
+        }
+        .p5-table {
+            width: 100%;
+            border-collapse: separate; 
+            border-spacing: 1px 8px; /* ★セルの左右間隔をさらに詰め、横に大きく */
+        }
         
-        .ts-control { background: #161e2d !important; color: white !important; border: 1px solid #334155 !important; font-weight: 700; border-radius: 8px !important; }
-        .ts-control input { color: white !important; }
+        .p5-table th {
+            background: var(--p5-black);
+            color: var(--p5-red);
+            font-family: 'Anton', sans-serif;
+            font-size: 14px;
+            padding: 8px 4px;
+            text-align: center;
+            transform: skewX(-10deg);
+            border: 1px solid var(--p5-red);
+        }
+        .p5-table th span {
+            display: block;
+            transform: skewX(10deg);
+        }
+
+        /* 行とセルの斜めデザイン統一 */
+        .match-row td, .row-spec td, .row-total td {
+            background: var(--p5-white);
+            border: 2px solid var(--p5-black);
+            padding: 0;
+            position: relative;
+            transform: skewX(-10deg);
+        }
+
+        /* 入力欄の中身 */
+        input.score-input, input.tip-in {
+            width: 100%;
+            height: 45px;
+            border: none;
+            background: transparent;
+            text-align: center;
+            font-family: 'Anton', sans-serif;
+            font-size: 20px;
+            color: var(--p5-black);
+            outline: none;
+            transform: skewX(10deg);
+            transition: all 0.2s;
+        }
+
+        /* ★数値の色分け */
+        .score-pos { color: var(--p5-blue) !important; text-shadow: 0 0 5px rgba(0, 153, 255, 0.4); }
+        .score-neg { color: var(--p5-red) !important; text-shadow: 0 0 5px rgba(230, 0, 18, 0.4); }
+        .score-zero { color: var(--p5-black) !important; }
+
+        /* ★フォーカス時の派手なグリッチモーション */
+        input.score-input:focus, input.tip-in:focus {
+            background: var(--p5-black);
+            animation: p5-focus-glitch 0.4s infinite alternate;
+            z-index: 10;
+        }
+
+        @keyframes p5-focus-glitch {
+            0% {
+                box-shadow: 0 0 5px var(--p5-red), inset 0 0 10px var(--p5-red);
+                filter: brightness(1.1);
+                transform: skewX(10deg) scale(1.02);
+            }
+            100% {
+                box-shadow: -4px 0 15px var(--p5-red), 4px 0 15px var(--p5-white), inset 0 0 20px var(--p5-red);
+                filter: brightness(1.4);
+                transform: skewX(10deg) scale(1.05);
+            }
+        }
+
+        /* 項番とBALの中身 */
+        .match-row td:first-child span {
+            display: block;
+            transform: skewX(10deg);
+        }
+
+        /* CALCボタンのデザイン */
+        .btn-calc {
+            background: var(--p5-red);
+            color: white;
+            font-family: 'Anton', sans-serif;
+            font-size: 11px;
+            padding: 2px 8px;
+            transform: skewX(10deg) rotate(-2deg);
+            box-shadow: 2px 2px 0px #000;
+            border: 1px solid #000;
+        }
+        .btn-calc:active {
+            transform: skewX(10deg) scale(0.9);
+        }
+
+        #tip-bal-cell {
+            font-family: 'Anton';
+            font-size: 12px;
+            text-align: center;
+            color: var(--p5-black);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .row-total td, .row-spec td {
+            background: var(--p5-black);
+            color: var(--p5-white);
+            font-family: 'Anton';
+            font-size: 18px;
+            text-align: center;
+            padding: 10px 0;
+        }
+        .row-total td[id^="tot-"], .row-spec td[id^="coin-"] {
+            color: var(--p5-yellow);
+        }
+
+        .p5-btn {
+            background: var(--p5-black);
+            color: var(--p5-white);
+            font-family: 'Anton';
+            text-transform: uppercase;
+            border: 2px solid var(--p5-white);
+            transform: skewX(-10deg);
+            transition: all 0.1s;
+        }
+        .p5-btn span {
+            display: block;
+            transform: skewX(10deg);
+        }
+        .p5-btn:active {
+            transform: skewX(-10deg) scale(0.95);
+            background: var(--p5-red);
+        }
+
+        /* Flatpickr P5 Custom */
+        .flatpickr-calendar.p5-calendar {
+            background: #000 !important;
+            border: 3px solid var(--p5-red) !important;
+            border-radius: 0 !important;
+            box-shadow: 10px 10px 0px #000, 10px 10px 0px 2px var(--p5-red) !important;
+            transform: skewX(-5deg);
+            font-family: 'Anton', sans-serif;
+        }
+        .p5-calendar .flatpickr-day.selected {
+            background: var(--p5-red) !important;
+            border-color: var(--p5-white) !important;
+        }
     </style>
 </head>
-<body class="pb-32 px-4">
-    <div class="max-w-md mx-auto space-y-6">
-        <header class="py-6">
+<body class="pb-32">
 
-<h1 class="text-xl font-bold">DATA <span id="admin-trigger" style="cursor: default;">ENTRY</span></h1>
-
-        </header>
-
-        <div class="px-1">
-            <label class="text-[10px] text-slate-500 font-black tracking-widest uppercase block mb-2 ml-1">Game Date</label>
-            <input type="date" id="game-date" 
-                class="bg-[#161e2d] text-white border border-white/10 rounded-lg p-3 w-full font-mono font-bold focus:border-orange-500 outline-none transition-all shadow-inner">
+    <div class="p5-header-bg shadow-2xl">
+        <div class="container mx-auto px-4 flex justify-between items-end">
+            <div>
+                <h1 class="text-4xl text-white italic leading-none">TAKE<br><span style="color:var(--p5-black); -webkit-text-stroke: 1px white;">YOUR</span><br>TIME</h1>
+            </div>
+            <div class="mb-1">
+                <div class="bg-black p-2 transform -skew-x-12 border-2 border-white shadow-[4px_4px_0_var(--p5-yellow)]">
+                    <input type="text" id="game-date" readonly class="bg-transparent text-white font-bold transform skew-x-12 outline-none font-mono text-sm uppercase cursor-pointer">
+                </div>
+            </div>
         </div>
+    </div>
 
-        <div class="grid grid-cols-2 gap-3 mb-6">
-
-            <select id="pA" class="roster-select"></select><select id="pB" class="roster-select"></select>
-            <select id="pC" class="roster-select"></select><select id="pD" class="roster-select"></select>
-        </div>
-
-        <div class="shadow-2xl">
-            <table class="mlb-table">
-                <thead>
-                    <tr><th style="width: 45px;">NO</th><th>A</th><th>B</th><th>C</th><th>D</th><th style="width: 55px;">BAL</th></tr>
-                </thead>
-                <tbody id="match-body"></tbody>
-                <tfoot>
-                    <tr class="row-spec"><td class="col-label">TOT</td><td id="tot-a">0</td><td id="tot-b">0</td><td id="tot-c">0</td><td id="tot-d">0</td><td></td></tr>
-                    <tr class="row-spec"><td class="col-label">DIF</td><td id="dif-a">0</td><td id="dif-b">0</td><td id="dif-c">0</td><td id="dif-d">0</td><td></td></tr>
-                    <tr class="row-spec row-tip" style="border-top: 1px solid #cbd5e1;">
-                        <td class="col-label">CHIPS</td>
-                        <td><input type="number" inputmode="decimal" class="score-input tip-in" data-col="a"></td>
-                        <td><input type="number" inputmode="decimal" class="score-input tip-in" data-col="b"></td>
-                        <td><input type="number" inputmode="decimal" class="score-input tip-in" data-col="c"></td>
-                        <td><input type="number" inputmode="decimal" class="score-input tip-in" data-col="d"></td>
-                        <td id="tip-bal-cell"></td>
-                    </tr>
-                    <tr class="row-spec" style="background: #eef2ff !important; border-top: 2px solid #041e42;">
-                        <td class="col-label" style="color:#041e42">COIN</td>
-                        <td id="coin-a" style="color:#f97316">0</td><td id="coin-b" style="color:#f97316">0</td><td id="coin-c" style="color:#f97316">0</td><td id="coin-d" style="color:#f97316">0</td><td></td>
-                    </tr>
-                </tfoot>
-            </table>
-            <div class="p-3 bg-white/5 border-t border-white/10 flex justify-between items-center">
-                <button id="add-row" class="text-[10px] font-black text-orange-500 uppercase tracking-widest">+ Add New Match</button>
-                <div id="status-badge" class="text-[9px] font-bold text-slate-500 uppercase">Analyzing...</div>
+    <div class="container mx-auto px-2">
+        <div class="grid grid-cols-4 gap-1 mb-6">
+            <div class="p5-box cursor-pointer active:scale-95 transition-transform" onclick="openPlayerSelector('pA')">
+                <div class="p5-box-content p-1">
+                    <div class="text-[10px] font-bold text-center bg-black text-white -mx-1 -mt-1 mb-1">PLAYER A</div>
+                    <div id="pA-display" class="text-center font-bold truncate h-6 leading-6 text-sm">SELECT</div>
+                </div>
+            </div>
+            <div class="p5-box cursor-pointer active:scale-95 transition-transform" onclick="openPlayerSelector('pB')">
+                <div class="p5-box-content p-1">
+                    <div class="text-[10px] font-bold text-center bg-black text-white -mx-1 -mt-1 mb-1">PLAYER B</div>
+                    <div id="pB-display" class="text-center font-bold truncate h-6 leading-6 text-sm">SELECT</div>
+                </div>
+            </div>
+            <div class="p5-box cursor-pointer active:scale-95 transition-transform" onclick="openPlayerSelector('pC')">
+                <div class="p5-box-content p-1">
+                    <div class="text-[10px] font-bold text-center bg-black text-white -mx-1 -mt-1 mb-1">PLAYER C</div>
+                    <div id="pC-display" class="text-center font-bold truncate h-6 leading-6 text-sm">SELECT</div>
+                </div>
+            </div>
+            <div class="p5-box cursor-pointer active:scale-95 transition-transform" onclick="openPlayerSelector('pD')">
+                <div class="p5-box-content p-1">
+                    <div class="text-[10px] font-bold text-center bg-black text-white -mx-1 -mt-1 mb-1">PLAYER D</div>
+                    <div id="pD-display" class="text-center font-bold truncate h-6 leading-6 text-sm">SELECT</div>
+                </div>
             </div>
         </div>
 
-        <button id="submit-btn" class="w-full py-5 bg-[#041e42] hover:bg-orange-600 text-white font-black rounded-xl shadow-xl transition-all active:scale-[0.98] uppercase tracking-[0.2em] text-xs disabled:opacity-20" disabled>Finalize Stats</button>
+        <div class="p5-table-container">
+            <table class="p5-table" id="score-table">
+                <thead>
+                    <tr>
+                        <th class="w-10"><span>#</span></th>
+                        <th><span>A</span></th>
+                        <th><span>B</span></th>
+                        <th><span>C</span></th>
+                        <th><span>D</span></th>
+                        <th class="w-12"><span>BAL</span></th>
+                    </tr>
+                </thead>
+                <tbody id="table-body"></tbody>
+                <tfoot>
+                    <tr class="row-total">
+                        <td style="background:var(--p5-black);"><span style="display:block; transform:skewX(10deg);">TOT</span></td>
+                        <td id="tot-a">0</td>
+                        <td id="tot-b">0</td>
+                        <td id="tot-c">0</td>
+                        <td id="tot-d">0</td>
+                        <td></td>
+                    </tr>
+                    <tr>
+                        <td colspan="6" class="py-2" style="background:transparent; border:none; transform:none;">
+                            <div class="bg-black text-white text-xs font-bold px-2 py-1 transform -skew-x-12 inline-block border border-white">
+                                <span class="block transform skew-x-12">EXTRA CHIPS & COINS</span>
+                            </div>
+                        </td>
+                    </tr>
+                    <tr class="row-spec">
+                        <td style="background:var(--p5-black);"><span style="display:block; transform:skewX(10deg);">TIP</span></td>
+                        <td><input type="number" inputmode="decimal" class="score-input tip-in text-white" data-col="a" placeholder="0"></td>
+                        <td><input type="number" inputmode="decimal" class="score-input tip-in text-white" data-col="b" placeholder="0"></td>
+                        <td><input type="number" inputmode="decimal" class="score-input tip-in text-white" data-col="c" placeholder="0"></td>
+                        <td><input type="number" inputmode="decimal" class="score-input tip-in text-white" data-col="d" placeholder="0"></td>
+                        <td id="tip-bal-cell" class="bg-gray-800 text-white">0</td>
+                    </tr>
+                    <tr class="row-spec">
+                        <td style="background:var(--p5-black); color:var(--p5-red);"><span style="display:block; transform:skewX(10deg);">COIN</span></td>
+                        <td id="coin-a">0</td>
+                        <td id="coin-b">0</td>
+                        <td id="coin-c">0</td>
+                        <td id="coin-d">0</td>
+                        <td></td>
+                    </tr>
+                </tfoot>
+            </table>
+        </div>
+
+        <div class="mt-6 flex gap-2">
+            <button id="add-row" class="p5-btn w-1/3 py-4 add-row-btn text-xl font-bold">
+                <span>+ ADD</span>
+            </button>
+            <button id="submit-btn" class="p5-btn w-2/3 py-4 bg-red-600 text-2xl font-black shadow-lg border-none" style="background:var(--p5-red);">
+                <span>SEND CARD</span>
+            </button>
+        </div>
+
+        <div id="status-badge" class="text-center mt-4 text-xs font-mono text-gray-500 uppercase tracking-widest">
+            PHANTOM THIEVES OF HEARTS
+        </div>
     </div>
+
+    <div id="admin-trigger"></div>
+
+    <div id="player-modal" class="fixed inset-0 z-[1000] hidden flex items-center justify-center overflow-hidden">
+        <div class="absolute inset-0 bg-black/95">
+            <div class="absolute inset-0 bg-red-600 opacity-20" style="clip-path: polygon(0 20%, 100% 0, 100% 80%, 0 100%);"></div>
+        </div>
+        <div class="relative z-10 w-full max-w-xs px-8">
+            <h2 class="text-white text-3xl italic font-black mb-6 border-b-4 border-white inline-block transform -rotate-3">CHOOSE ALLY</h2>
+            <div id="modal-player-list" class="flex flex-col gap-3 max-h-[60vh] overflow-y-auto pr-2 pl-4"></div>
+            <button onclick="closePlayerSelector()" class="mt-8 text-white bg-red-600 px-6 py-2 font-bold transform -skew-x-12 hover:bg-white hover:text-red-600 transition-colors">
+                CANCEL
+            </button>
+        </div>
+    </div>
+
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="app.js"></script>
-    <script src="navbar.js"></script>
 </body>
 </html>
