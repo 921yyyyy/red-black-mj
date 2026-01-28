@@ -11,7 +11,6 @@ document.addEventListener('DOMContentLoaded', async () => {
     // UI Initialization (Calendar & Players)
     // --------------------------------------------------------
     
-    // Flatpickrの初期化
     flatpickr("#game-date", {
         dateFormat: "Y-m-d",
         defaultDate: "today",
@@ -21,12 +20,10 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
     });
 
-    // プレイヤー選択用の状態管理
     let allPlayers = []; 
     let activeTargetId = null; 
     const selectedPlayerValues = { pA: "", pB: "", pC: "", pD: "" };
 
-    // ロースターの初期取得
     async function initRoster() {
         try {
             const { data: players, error } = await window.sb.from('players').select('name');
@@ -37,7 +34,6 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
     }
 
-    // --- プレイヤー選択モーダルの制御 ---
     window.openPlayerSelector = (targetId) => {
         activeTargetId = targetId;
         const listEl = document.getElementById('modal-player-list');
@@ -70,7 +66,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         selectedPlayerValues[activeTargetId] = name;
         const displayEl = document.getElementById(`${activeTargetId}-display`);
         displayEl.innerText = name.toUpperCase();
-        displayEl.classList.add('text-red-600');
+        displayEl.style.color = 'var(--p5-red)';
         window.closePlayerSelector();
     }
 
@@ -104,7 +100,6 @@ document.addEventListener('DOMContentLoaded', async () => {
             input.addEventListener('input', updateTotals);
             input.addEventListener('focus', function() { this.select(); });
             
-            // ダブルタップ反転機能
             input.addEventListener('dblclick', function() {
                 const val = parseFloat(this.value) || 0;
                 if(val !== 0) {
@@ -115,12 +110,10 @@ document.addEventListener('DOMContentLoaded', async () => {
         });
     };
 
-    // 自動計算（歪み直し）ロジック
     window.runCalc = (btn) => {
         const row = btn.closest('tr');
         const inputs = Array.from(row.querySelectorAll('.score-input'));
         const emptyInputs = inputs.filter(i => i.value === "");
-        
         const target = emptyInputs.length > 0 ? emptyInputs[0] : inputs[3];
         
         let otherSum = 0;
@@ -141,7 +134,6 @@ document.addEventListener('DOMContentLoaded', async () => {
         document.querySelectorAll('.match-row').forEach(row => {
             const inputs = row.querySelectorAll('.score-input');
             
-            // ★ 個別入力欄の色分け
             inputs.forEach(input => {
                 const val = parseFloat(input.value) || 0;
                 input.classList.remove('score-pos', 'score-neg', 'score-zero');
@@ -152,13 +144,12 @@ document.addEventListener('DOMContentLoaded', async () => {
 
             const vals = Array.from(inputs).map(i => parseFloat(i.value) || 0);
             const hasInput = Array.from(inputs).some(i => i.value !== "");
-            
             const rowSum = vals.reduce((a,b) => a+b, 0);
             const balCell = row.querySelector('.bal-cell');
             
             if (!hasInput) {
                 balCell.innerHTML = "";
-            } else if (Math.abs(rowSum) < 0.01) { // 浮動小数点誤差考慮
+            } else if (Math.abs(rowSum) < 0.01) {
                 balCell.innerHTML = `<span class="text-gray-400 font-black italic text-[10px]" style="transform:skewX(10deg); display:block;">OK</span>`;
             } else {
                 balCell.innerHTML = `<button class="btn-calc" onclick="runCalc(this)">CALC</button>`;
@@ -192,7 +183,6 @@ document.addEventListener('DOMContentLoaded', async () => {
             const col = input.dataset.col;
             const val = parseFloat(input.value) || 0;
             
-            // ★ TIP入力欄の色分け
             input.classList.remove('score-pos', 'score-neg', 'score-zero');
             if (val > 0) input.classList.add('score-pos');
             else if (val < 0) input.classList.add('score-neg');
@@ -203,17 +193,16 @@ document.addEventListener('DOMContentLoaded', async () => {
 
         const tipBalCell = document.getElementById('tip-bal-cell');
         tipBalCell.innerText = tipSum;
-        if(Math.abs(tipSum) > 0.01) tipBalCell.style.color = 'var(--p5-red)';
-        else tipBalCell.style.color = 'var(--p5-black)';
+        tipBalCell.style.color = Math.abs(tipSum) > 0.01 ? 'var(--p5-red)' : 'var(--p5-black)';
 
         ['a','b','c','d'].forEach(id => {
             const tEl = document.getElementById(`tot-${id}`);
             const total = grandTotals[id];
             tEl.innerText = total.toFixed(1).replace(/\.0$/, '');
             
-            // 合計欄の色分け（既存の色指定をP5カラーに）
-            if(total > 0) tEl.style.color = 'var(--p5-blue)';
-            else if(total < 0) tEl.style.color = 'var(--p5-red)';
+            // 合計欄の文字色設定
+            if(total > 0) tEl.style.color = 'var(--p5-sp-pink)';
+            else if(total < 0) tEl.style.color = 'var(--p5-hp-cyan)';
             else tEl.style.color = 'var(--p5-yellow)';
 
             const cEl = document.getElementById(`coin-${id}`);
@@ -227,7 +216,6 @@ document.addEventListener('DOMContentLoaded', async () => {
     document.getElementById('submit-btn').onclick = async () => {
         const btn = document.getElementById('submit-btn');
         const badge = document.getElementById('status-badge');
-        
         const pIds = ['pA', 'pB', 'pC', 'pD'];
         const names = pIds.map(id => selectedPlayerValues[id]);
         
@@ -250,7 +238,6 @@ document.addEventListener('DOMContentLoaded', async () => {
             }
 
             const { data: mstr } = await window.sb.from('players').select('id, name').in('name', names);
-            
             const gameDate = document.getElementById('game-date').value;
             const finalTimestamp = new Date().toISOString();
             
@@ -280,9 +267,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             const coinTotals = ['a','b','c','d'].map(id => parseFloat(document.getElementById(`coin-${id}`).innerText));
             const tips = ['a','b','c','d'].map(id => parseFloat(document.querySelector(`.tip-in[data-col="${id}"]`).value) || 0);
 
-            const summaryData = names.map((name, i) => ({
-                name, score: grandTotals[i]
-            }));
+            const summaryData = names.map((name, i) => ({ name, score: grandTotals[i] }));
             const sorted = [...summaryData].sort((a,b) => b.score - a.score);
             
             const summariesToInsert = names.map((name, i) => {
@@ -300,9 +285,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                 };
             });
 
-            if(resultsToInsert.length > 0) {
-                await window.sb.from('game_results').insert(resultsToInsert);
-            }
+            if(resultsToInsert.length > 0) await window.sb.from('game_results').insert(resultsToInsert);
             await window.sb.from('set_summaries').insert(summariesToInsert);
 
             badge.innerText = "MISSION COMPLETE";
@@ -310,9 +293,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             btn.style.color = "var(--p5-yellow)";
             btn.querySelector('span').innerText = "TAKE YOUR TREASURE";
             
-            setTimeout(() => {
-                location.href = "history.html";
-            }, 1000);
+            setTimeout(() => { location.href = "history.html"; }, 1000);
 
         } catch (e) {
             alert("Error: " + e.message);
@@ -321,40 +302,26 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
     };
 
-    // --------------------------------------------------------
-    // Event Listeners Initialization
-    // --------------------------------------------------------
     document.getElementById('add-row').onclick = window.addMatchRow;
     
     document.querySelectorAll('.tip-in').forEach(input => {
         input.addEventListener('input', updateTotals);
         input.addEventListener('focus', function() { this.select(); });
-        input.addEventListener('dblclick', function() {
-            const val = parseFloat(this.value) || 0;
-            if(val !== 0) {
-                this.value = val * -1;
-                updateTotals();
-            }
-        });
     });
 
     await initRoster();
     for(let i=0; i<4; i++) window.addMatchRow();
 
-    // --------------------------------------------------------
-    // Admin / Easter Egg Logic
-    // --------------------------------------------------------
+    // Admin trigger
     let entryTapCount = 0;
     let entryTapTimer;
     const entryTrigger = document.getElementById('admin-trigger');
-
     if (entryTrigger) {
         entryTrigger.addEventListener('click', () => {
             entryTapCount++;
             clearTimeout(entryTapTimer);
             entryTapTimer = setTimeout(() => { entryTapCount = 0; }, 2000);
             if (entryTapCount === 5) {
-                entryTapCount = 0;
                 const pass = prompt("PHANTOM THIEF PASSWORD:");
                 if (pass === "Gemini") location.href = "admin.html";
             }
