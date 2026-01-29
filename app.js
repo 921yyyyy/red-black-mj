@@ -33,6 +33,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
     }
 
+    // ★修正: 2回タッチ仕様のプレイヤーセレクター
     window.openPlayerSelector = (targetId) => {
         activeTargetId = targetId;
         const listEl = document.getElementById('modal-player-list');
@@ -40,9 +41,20 @@ document.addEventListener('DOMContentLoaded', async () => {
 
         allPlayers.forEach(name => {
             const btn = document.createElement('button');
-            btn.className = "w-full py-4 px-6 text-left text-xl font-bold bg-white text-black transform -skew-x-12 hover:bg-red-600 hover:text-white transition-all border-l-8 border-transparent hover:border-black mb-1";
-            btn.innerHTML = `<span class="block transform skew-x(12deg)">${name.toUpperCase()}</span>`;
-            btn.onclick = () => selectPlayer(name);
+            // index.htmlのstyleで定義した .player-select-btn クラスを使用
+            btn.className = "player-select-btn";
+            btn.innerHTML = `<span>${name.toUpperCase()}</span>`;
+            
+            btn.onclick = () => {
+                // すでに選択（エフェクト発生中）状態なら決定
+                if (btn.classList.contains('selected')) {
+                    selectPlayer(name);
+                } else {
+                    // 他のボタンからselectedを解除して、このボタンにエフェクトを付与
+                    document.querySelectorAll('.player-select-btn').forEach(b => b.classList.remove('selected'));
+                    btn.classList.add('selected');
+                }
+            };
             listEl.appendChild(btn);
         });
 
@@ -52,8 +64,9 @@ document.addEventListener('DOMContentLoaded', async () => {
         addBtn.onclick = () => {
             const newName = prompt("ENTER CODE NAME:");
             if (newName) {
-                if(!allPlayers.includes(newName)) allPlayers.push(newName);
-                selectPlayer(newName);
+                const upperName = newName.toUpperCase();
+                if(!allPlayers.includes(upperName)) allPlayers.push(upperName);
+                selectPlayer(upperName);
             }
         };
         listEl.appendChild(addBtn);
@@ -74,7 +87,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     };
 
     // --------------------------------------------------------
-    // Core Logic (Calculation)
+    // Core Logic (Calculation) - 以降デグレード防止のため変更なし
     // --------------------------------------------------------
     let rowCount = 0;
 
@@ -159,7 +172,6 @@ document.addEventListener('DOMContentLoaded', async () => {
             baseTotals.d += vals[3];
         });
 
-        // CHIP/TIP 集計
         const chipInputs = document.querySelectorAll('.chip-in');
         chipInputs.forEach(input => {
             const val = parseFloat(input.value) || 0;
@@ -189,9 +201,6 @@ document.addEventListener('DOMContentLoaded', async () => {
         });
     }
 
-    // --------------------------------------------------------
-    // Submit / Save Logic (配列型カラム対応修正版)
-    // --------------------------------------------------------
     document.getElementById('submit-btn').onclick = async () => {
         const btn = document.getElementById('submit-btn');
         const badge = document.getElementById('status-badge');
@@ -212,7 +221,6 @@ document.addEventListener('DOMContentLoaded', async () => {
             btn.querySelector('span').innerText = "SENDING...";
             badge.innerText = "INFILTRATING DATABASE...";
 
-            // 1. プレイヤー登録
             for(const name of names) {
                 await window.sb.from('players').upsert({ name: name }, { onConflict: 'name' });
             }
@@ -223,16 +231,14 @@ document.addEventListener('DOMContentLoaded', async () => {
             const gameDate = document.getElementById('game-date').value;
             const finalTimestamp = new Date().toISOString();
 
-            // 2. gamesテーブルへのインサート (player_names は配列のまま送信)
             const { data: gameRecord, error: gError } = await window.sb.from('games').insert([{
                 game_date: gameDate,
-                player_names: names, // ★修正: joinせず配列で送る
+                player_names: names,
                 created_at: finalTimestamp
             }]).select();
             if(gError) throw gError;
             const gameId = gameRecord[0].id;
 
-            // 3. game_resultsテーブル (game_dateなし, rankあり)
             let resultsToInsert = [];
             const rows = document.querySelectorAll('.match-row');
             rows.forEach((row, idx) => {
@@ -260,7 +266,6 @@ document.addEventListener('DOMContentLoaded', async () => {
                 if(rError) throw rError;
             }
 
-            // 4. set_summariesテーブル (tips, coins, final_rank)
             const grandTotals = ['a','b','c','d'].map(id => parseFloat(document.getElementById(`tot-${id}`).innerText));
             const coinTotals = ['a','b','c','d'].map(id => parseFloat(document.getElementById(`coin-${id}`).innerText));
             const chipVals = ['a','b','c','d'].map(id => parseFloat(document.querySelector(`.chip-in[data-col="${id}"]`).value) || 0);
@@ -286,10 +291,9 @@ document.addEventListener('DOMContentLoaded', async () => {
             const { error: sError } = await window.sb.from('set_summaries').insert(summariesToInsert);
             if(sError) throw sError;
 
-            // 5. アクションログの保存 (player_names は配列, target_game_id を指定)
             const logData = {
                 action_type: 'game_save',
-                player_names: names, // ★修正: 配列で送る
+                player_names: names,
                 details: `Game saved with ID: ${gameId}`,
                 target_game_id: gameId,
                 created_at: finalTimestamp
