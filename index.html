@@ -33,14 +33,15 @@
             background-size: 20px 20px;
         }
 
-        /* --- 共通パーツ --- */
         .p5-box {
             background: var(--p5-white);
             transform: skewX(-10deg);
             border: 3px solid var(--p5-black);
             box-shadow: 5px 5px 0px var(--p5-red);
         }
-        .p5-box-content { transform: skewX(10deg); }
+        .p5-box-content {
+            transform: skewX(10deg);
+        }
 
         .p5-header-bg {
             background: var(--p5-red);
@@ -56,7 +57,6 @@
             transform: rotate(-2deg);
         }
 
-        /* --- テーブル関連 --- */
         .p5-table-container {
             overflow-x: auto;
             margin: 0 -10px;
@@ -67,6 +67,7 @@
             border-collapse: separate; 
             border-spacing: 1px 8px;
         }
+        
         .p5-table th {
             background: var(--p5-black);
             color: var(--p5-red);
@@ -89,37 +90,95 @@
         }
 
         input.score-input, input.chip-in {
-            width: 100%; height: 45px; border: none; background: transparent;
-            text-align: center; font-family: 'Anton', sans-serif; font-size: 22px;
-            color: var(--p5-black); outline: none; transform: skewX(10deg);
-            transition: all 0.2s; position: relative; z-index: 2;
+            width: 100%;
+            height: 45px;
+            border: none;
+            background: transparent;
+            text-align: center;
+            font-family: 'Anton', sans-serif;
+            font-size: 22px;
+            color: var(--p5-black);
+            outline: none;
+            transform: skewX(10deg);
+            transition: all 0.2s;
+            position: relative;
+            z-index: 2;
         }
 
-        .chip-row td { background: var(--p5-black) !important; border: none !important; }
-        input.chip-in { color: var(--p5-white) !important; }
+        .chip-row td {
+            background: var(--p5-black) !important;
+            border: none !important;
+        }
+        input.chip-in {
+            color: var(--p5-white) !important;
+        }
+
+        .score-pos, .score-neg { color: var(--p5-black) !important; font-weight: bold; font-style: normal; }
+        .score-zero { opacity: 0.3; }
 
         input.score-input:focus, input.chip-in:focus {
-            background: var(--p5-black) !important; color: var(--p5-white) !important;
+            background: var(--p5-black) !important;
+            color: var(--p5-white) !important;
             box-shadow: inset 0 0 10px var(--p5-red), 0 0 15px var(--p5-red);
-            z-index: 20; animation: p5-focus-simple 0.4s infinite alternate;
+            outline: none;
+            z-index: 20;
+            position: relative;
+            animation: p5-focus-simple 0.4s infinite alternate;
         }
-        @keyframes p5-focus-simple { 0% { filter: brightness(1); } 100% { filter: brightness(1.3); } }
+
+        @keyframes p5-focus-simple {
+            0% { filter: brightness(1); }
+            100% { filter: brightness(1.3); box-shadow: inset 0 0 15px var(--p5-red), 0 0 20px var(--p5-red); }
+        }
+
+        .match-row td:first-child span { display: block; transform: skewX(10deg); }
+
+        .btn-calc {
+            background: var(--p5-red);
+            color: white;
+            font-family: 'Anton', sans-serif;
+            font-size: 11px;
+            padding: 2px 8px;
+            transform: skewX(10deg) rotate(-2deg);
+            box-shadow: 2px 2px 0px #000;
+            border: 1px solid #000;
+        }
 
         .row-total td, .row-spec td {
-            background: var(--p5-black); color: var(--p5-white);
-            font-family: 'Anton'; font-size: 18px; text-align: center; padding: 10px 0;
+            background: var(--p5-black);
+            color: var(--p5-white);
+            font-family: 'Anton';
+            font-size: 18px;
+            text-align: center;
+            padding: 10px 0;
         }
+        .row-total td[id^="tot-"] { color: var(--p5-white); }
+        .row-spec td[id^="coin-"] { color: var(--p5-yellow); }
+
+        #chip-bal-cell {
+            font-family: 'Anton';
+            font-size: 12px;
+            text-align: center;
+            background: var(--p5-black);
+            color: var(--p5-white);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            height: 45px;
+        }
+
         .p5-btn {
-            background: var(--p5-black); color: var(--p5-white); font-family: 'Anton';
-            border: 2px solid var(--p5-white); transform: skewX(-10deg);
+            background: var(--p5-black);
+            color: var(--p5-white);
+            font-family: 'Anton';
+            text-transform: uppercase;
+            border: 2px solid var(--p5-white);
+            transform: skewX(-10deg);
+            transition: all 0.1s;
         }
         .p5-btn span { display: block; transform: skewX(10deg); }
 
-        /* --- プレイヤー選択モーダル：アナーキーVer --- */
-        #player-modal { overflow: hidden; }
-        #player-modal .bg-black\/90 { background-color: rgba(0, 0, 0, 0.95); }
-        
-        /* スクロールバー非表示 */
+        /* --- プレイヤー選択用：アナーキー・グリッチVer --- */
         #modal-player-list::-webkit-scrollbar { display: none; }
 
         .player-select-btn {
@@ -127,68 +186,98 @@
             background: var(--p5-white);
             color: var(--p5-black);
             font-family: 'Anton', sans-serif;
-            font-size: 24px;
-            padding: 10px 25px;
+            font-size: 26px; /* 文字を大きく */
+            padding: 10px 30px;
             border: none;
             text-align: left;
-            transform: skewX(-15deg) rotate(-1deg);
             z-index: 1;
-            overflow: visible;
-            transition: all 0.2s;
-            width: 85%; /* 横スクロール防止のため少し小さく */
+            overflow: visible; /* はみ出しを許可 */
+            transition: all 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            width: 80%;
             margin: 0 auto;
+            /* ランダムな傾斜の初期化 */
+            transform: skewX(-15deg) rotate(-1.5deg);
             clip-path: polygon(2% 0%, 100% 0%, 98% 100%, 0% 100%);
         }
 
-        /* 偶数・奇数で傾きと位置をバラバラにする */
-        .player-select-btn:nth-child(even) { transform: skewX(-15deg) rotate(2deg) translateX(5px); }
-        .player-select-btn:nth-child(3n) { transform: skewX(-15deg) rotate(-3deg) translateX(-10px); }
+        /* アナーキー配置：わざとズラす */
+        .player-select-btn:nth-child(even) { transform: skewX(-15deg) rotate(2deg) translateX(10px); }
+        .player-select-btn:nth-child(3n) { transform: skewX(-15deg) rotate(-3deg) translateX(-15px); }
 
         .player-select-btn span {
-            display: block; transform: skewX(15deg);
-            font-style: italic; letter-spacing: -1px; position: relative; z-index: 100;
+            display: block;
+            transform: skewX(15deg);
+            position: relative;
+            z-index: 100;
+            font-style: italic;
+            font-weight: 900;
         }
 
-        /* エフェクトレイヤー */
+        /* はみ出る色の層 */
         .player-select-btn::before, .player-select-btn::after {
-            content: ""; position: absolute; inset: -2px -25px;
-            opacity: 0; mix-blend-mode: screen; z-index: -1; pointer-events: none;
+            content: "";
+            position: absolute;
+            /* 左右に大きくはみ出すようにinsetをマイナス指定 */
+            inset: -5px -60px; 
+            opacity: 0;
+            mix-blend-mode: screen;
+            z-index: -1;
+            pointer-events: none;
+            transition: opacity 0.2s;
         }
         .player-select-btn::before {
-            background: var(--p5-red); clip-path: polygon(0 15%, 100% 0, 90% 85%, 10% 100%);
+            background: var(--p5-red);
+            clip-path: polygon(0 20%, 100% 0, 95% 80%, 5% 100%);
         }
         .player-select-btn::after {
-            background: var(--p5-cyan); clip-path: polygon(5% 0, 95% 10%, 100% 90%, 0 80%);
+            background: var(--p5-cyan);
+            clip-path: polygon(5% 0, 95% 15%, 100% 85%, 0 75%);
         }
 
-        /* 選択（selected）時：赤く染まり、エフェクト発動 */
+        /* 1回目のタッチ（selectedクラス）でアナーキーかつグリッチ全開 */
         .player-select-btn.selected {
             background: var(--p5-red) !important;
             color: var(--p5-white) !important;
-            transform: skewX(-20deg) scale(1.1) rotate(0deg) !important;
-            z-index: 100;
-            box-shadow: 0 0 20px rgba(230, 0, 18, 0.6);
-        }
-        .player-select-btn.selected::before { opacity: 1; animation: p5-glitch-a-slow 0.48s steps(4) infinite; }
-        .player-select-btn.selected::after { opacity: 1; animation: p5-glitch-b-slow 0.48s steps(4) infinite; }
-
-        @keyframes p5-glitch-a-slow {
-            0% { transform: translate(-10px, 5px) scale(1.1, 0.9); }
-            50% { transform: translate(15px, -5px) scale(1.2, 1.1); }
-            100% { transform: translate(-10px, 5px) scale(1.1, 0.9); }
-        }
-        @keyframes p5-glitch-b-slow {
-            0% { transform: translate(15px, -5px) scale(1.2, 1.1); }
-            50% { transform: translate(-20px, 8px) scale(0.9, 1.2); }
-            100% { transform: translate(15px, -5px) scale(1.2, 1.1); }
+            /* 選択時はより大きく、中心に */
+            transform: skewX(-20deg) scale(1.2) rotate(0deg) translateX(0) !important;
+            z-index: 50;
+            box-shadow: -15px 15px 0 var(--p5-black);
         }
 
-        /* 戻るボタンも怪盗仕様 */
-        .btn-back {
-            background: var(--p5-black); color: var(--p5-white);
-            border: 2px solid var(--p5-white); padding: 8px 24px;
-            font-family: 'Anton'; font-size: 14px; transform: skewX(-12deg);
-            box-shadow: 4px 4px 0 var(--p5-red);
+        .player-select-btn.selected::before {
+            opacity: 0.8;
+            animation: p5-glitch-a-ultra 0.4s steps(2) infinite;
+        }
+        .player-select-btn.selected::after {
+            opacity: 0.8;
+            animation: p5-glitch-b-ultra 0.4s steps(2) infinite;
+        }
+
+        /* グリッチ：より広範囲に激しく */
+        @keyframes p5-glitch-a-ultra {
+            0% { transform: translate(-30px, 10px) scale(1.3, 0.7); filter: hue-rotate(0deg); }
+            50% { transform: translate(40px, -10px) scale(1.1, 1.2); filter: hue-rotate(90deg); }
+            100% { transform: translate(-30px, 10px) scale(1.3, 0.7); }
+        }
+        @keyframes p5-glitch-b-ultra {
+            0% { transform: translate(40px, -10px) scale(1.1, 1.2); }
+            50% { transform: translate(-45px, 15px) scale(0.8, 1.3); }
+            100% { transform: translate(40px, -10px) scale(1.1, 1.2); }
+        }
+
+        /* キャンセルボタンを「戻る」らしい控えめなP5デザインに */
+        .btn-cancel {
+            background: var(--p5-black);
+            color: var(--p5-white);
+            border: 2px solid var(--p5-white);
+            padding: 10px 30px;
+            font-family: 'Anton';
+            transform: skewX(-15deg);
+            transition: all 0.2s;
+        }
+        .btn-cancel:active {
+            background: var(--p5-red);
+            transform: skewX(-15deg) scale(0.9);
         }
     </style>
 </head>
@@ -291,20 +380,20 @@
 
     <div id="player-modal" class="fixed inset-0 z-[1000] hidden flex items-center justify-center overflow-hidden">
         <div class="absolute inset-0 bg-black/95">
-            <div class="absolute inset-0 bg-red-600 opacity-20" style="clip-path: polygon(0 40%, 100% 20%, 100% 50%, 0 70%);"></div>
+            <div class="absolute inset-0 bg-red-600 opacity-20" style="clip-path: polygon(0 20%, 100% 40%, 100% 60%, 0 80%);"></div>
         </div>
         
         <div class="relative z-10 w-full max-w-sm">
-            <h2 class="text-white text-5xl italic font-black mb-10 border-b-8 border-red-600 inline-block transform -rotate-6 ml-6 tracking-tighter">
+            <h2 class="text-white text-5xl italic font-black mb-10 border-b-8 border-white inline-block transform -rotate-3 ml-6">
                 CHOOSE ALLY
             </h2>
             
-            <div id="modal-player-list" class="flex flex-col gap-6 max-h-[60vh] overflow-y-auto px-10 py-10">
+            <div id="modal-player-list" class="flex flex-col gap-6 max-h-[60vh] overflow-y-auto px-12 py-10 overflow-x-visible">
                 </div>
             
-            <div class="flex justify-start ml-10 mt-4">
-                <button onclick="closePlayerSelector()" class="btn-back">
-                    <span>> BACK</span>
+            <div class="flex justify-center mt-6">
+                <button onclick="closePlayerSelector()" class="btn-cancel">
+                    <span>CANCEL</span>
                 </button>
             </div>
         </div>
